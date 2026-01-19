@@ -1,0 +1,22 @@
+#python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.egg-info/
+dist/
+build/
+
+.env
+
+# virtual env
+stock/ 
+
+/staticfiles/
+/media/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
