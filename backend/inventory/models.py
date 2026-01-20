@@ -101,3 +101,24 @@ class StockBatch(models.Model):
         if status == 'finished':
             self.quantity = 0
         self.save()
+
+
+class PartialDepletion(models.Model):
+    batch = models.ForeignKey(StockBatch,on_delete=models.CASCADE, related_name='depletions')
+    quantity_used = models.DecimalField(max_digits=10, decimal_places=2)
+    recorded_at = models.DateTimeField(default=timezone.now)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-recorded_at']
+
+        def __str__(self):
+            return f"{self.batch.product.name} - {self.quantity_used} used"
+        
+        def save(self, *args, **kwargs):
+            super().save(*args, **kwargs)
+            self.batch.remaining_quantity -= self.quantity_used
+            if self.batch.remaining_quantity <= 0:
+                self.batch.mark_depleted()
+            else:
+                self.batch.save()
