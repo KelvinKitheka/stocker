@@ -25,10 +25,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
-    'rest_framework_jwt'
+
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -55,14 +56,25 @@ TEMPLATES = [
     },
 ]
 
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+}
+
 WSGI_APPLICATION = 'stocker.wsgi.application'
 
 
 # Database
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': os.getenv("DB_ENGINE", "django.db.backends.postgresql"),
+        'NAME': os.getenv("DB_NAME"),
+        'USER': os.getenv("DB_USER", ""),
+        'PASSWORD': os.getenv("DB_PASSWORD", ""),
+        'HOST': os.getenv("DB_HOST", ""),
+        'PORT': os.getenv("DB_PORT", ""),
+        
     }
 }
 
