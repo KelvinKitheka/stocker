@@ -122,3 +122,16 @@ class PartialDepletion(models.Model):
                 self.batch.mark_depleted()
             else:
                 self.batch.save()
+
+class LowStockAlert(models.Model):
+    product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name='alert')
+    threshold_quantity = models.DecimalField(max_digits=10,  decimal_places=2)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.product.name} < {self.threshold_quantity}"
+    
+    @property
+    def is_triggered(self):
+        return self.product.current_stock <= self.threshold_quantity
