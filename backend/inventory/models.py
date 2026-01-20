@@ -43,3 +43,21 @@ class Product(models.Model):
             return 0
         velocities = [b.velocity for b in batches]
         return sum(velocities) / len(velocities) if velocities else 0
+    
+class StockBatch(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name=batches)
+    quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    remaining_quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    buy_price_per_unit = models.DecimalField(max_digits=10, decimal_places=2)
+    sell_price_per_unit = models.DecimalField(max_digits=10, decimal_places=2)
+    added_at = models.DateTimeField(default=timezone.now)
+    depleted_at = models.DateTimeField(null=True, blank=True)
+    is_depleted = models.BooleanField(default=False)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-added_at']
+        verbose_name_plural = 'Stock Batches'
+
+    def __str__(self):
+        return f"{self.product.name}- {self.quantity} units"
