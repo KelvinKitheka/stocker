@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from decimal import Decimal
 
-# Create your models here.
+# Product model
 class Product(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
@@ -43,7 +43,8 @@ class Product(models.Model):
             return 0
         velocities = [b.velocity for b in batches]
         return sum(velocities) / len(velocities) if velocities else 0
-    
+
+# Stockbatch model  
 class StockBatch(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name=batches)
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
@@ -61,3 +62,42 @@ class StockBatch(models.Model):
 
     def __str__(self):
         return f"{self.product.name}- {self.quantity} units"
+    
+    @property
+    def total_buy_costs(self):
+        return self.buy_price_per_unit * self.quantity
+    
+    @property
+    def estimated_revenue(self):
+        return self.quantity * self.sell_price_per_unit
+    
+    @property
+    def estimated_profit(self):
+        return self.estimated_revenue - self.total_buy_costs
+    
+    @property
+    def profit_margin(self):
+        if self.total_buy_costs > 0:
+            return (self.estimated_profit / self.total_buy_costs) * 100
+        return 0
+    
+    @property
+    def days_in_stock(self):
+        if self.is_depleted and self.depleted_at:
+            delta = self.depleted_at - self.added_at
+        else:
+            delta = timezone.now() - self.added_at
+        return max(delta.days, 1)
+    
+    @property
+    def velocity(self):
+        sold = self.quantity - self.remaining_quantity
+        return float(sold) / self.days_in_stock
+    
+    @property
+    def mark_depleted(self, status = 'finished'):
+        self.is_depleted = True
+        self.depleted_at = timezone.now()
+        if status == 'finished':
+            self.quantity = 0
+        self.save()
