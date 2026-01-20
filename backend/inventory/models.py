@@ -15,7 +15,7 @@ class Product(models.Model):
     ('other', 'Other'),
     ]
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
-    default_sell_prize= models.DecimalField(max_digits=10, decimal_places=2)
+    default_sell_price= models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 
@@ -46,7 +46,7 @@ class Product(models.Model):
 
 # Stockbatch model  
 class StockBatch(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name=batches)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='batches')
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
     remaining_quantity = models.DecimalField(max_digits=10, decimal_places=2)
     buy_price_per_unit = models.DecimalField(max_digits=10, decimal_places=2)
@@ -112,16 +112,16 @@ class PartialDepletion(models.Model):
     class Meta:
         ordering = ['-recorded_at']
 
-        def __str__(self):
-            return f"{self.batch.product.name} - {self.quantity_used} used"
-        
-        def save(self, *args, **kwargs):
-            super().save(*args, **kwargs)
-            self.batch.remaining_quantity -= self.quantity_used
-            if self.batch.remaining_quantity <= 0:
-                self.batch.mark_depleted()
-            else:
-                self.batch.save()
+    def __str__(self):
+        return f"{self.batch.product.name} - {self.quantity_used} used"
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.batch.remaining_quantity -= self.quantity_used
+        if self.batch.remaining_quantity <= 0:
+            self.batch.mark_depleted()
+        else:
+            self.batch.save()
 
 class LowStockAlert(models.Model):
     product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name='alert')

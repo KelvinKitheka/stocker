@@ -4,10 +4,10 @@ from .models import Product, StockBatch, PartialDepletion, LowStockAlert
 # Register  models
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['name', 'category', 'default_sell_price', 'current_stock', 'is_active', 'created_at']
+    list_display = ['name', 'category', 'default_sell_price', 'is_active', 'created_at']
     list_filter = ['is_active', 'category', 'created_at']
     search_fields = ['name', 'category']
-    readonly_fields = ['current_stock', 'total_value', 'created_at']
+    readonly_fields = ['total_value', 'created_at']
 
 
 
@@ -18,7 +18,7 @@ class StockBatchAdmin(admin.ModelAdmin):
     list_filter = ['is_depleted', 'depleted_at', 'added_at']
     search_fields = ['product__name', 'notes']
     readonly_fields = ['estimated_profit', 'profit_margin', 'days_in_stock', 'velocity']
-    date_hierarchy = ['added_at']
+    date_hierarchy = 'added_at'
 
 @admin.register(PartialDepletion)
 class PartialDepletionAdmin(admin.ModelAdmin):
