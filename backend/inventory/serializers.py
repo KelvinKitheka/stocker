@@ -30,3 +30,39 @@ class ProductSerializers(serializers.ModelSerializer):
         
     def get_average_velocity(self, obj):
         return obj.average_velocity
+    
+class StockBatchSerializer(serializers.ModelSerializer):
+    product_name = serializers.SerializerMethodField()
+    estimated_profit = serializers.SerializerMethodField()
+    profit_margin = serializers.SerializerMethodField()
+    days_in_stock = serializers.SerializerMethodField()
+    velocity = serializers.SerializerMethodField()
+    total_buy_cost = serializers.SerializerMethodField()
+
+    class Meta:
+        model = StockBatch
+        fields = ['id', 'product', 'product_name', 'quantity', 'remaining_quantity',
+                'buy_price_per_unit', 'sell_price_per_unit', 'added_at', 'depleted_at',
+                'is_depleted', 'notes', 'estimated_profit', 'profit_margin', 
+                'days_in_stock', 'velocity', 'total_buy_cost']
+        read_only_fields = ['depleted_at', 'is_depleted']
+
+
+    def get_estimated_profit(self, obj):
+        return float(obj.estimated_profit)
+    
+    def get_profit_margin(self, obj):
+        return float(obj.profit_margin)
+    
+    def get_days_in_stock(self, obj):
+        return obj.days_in_stock
+    
+    def get_velocity(self, obj):
+        return obj.velocity
+    
+    def get_total_buy_cost(self, obj):
+        return float(obj.total_buy_cost)
+    
+    def create(self, validated_data):
+        validated_data['remaining_quantity'] = validated_data['quantity']
+        return super().create(validated_data)
