@@ -4,7 +4,7 @@ from .models import Product, StockBatch, PartialDepletion, LowStockAlert
 # Register  models
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['name', 'category', 'default_sell_price', 'is_active', 'created_at']
+    list_display = ['name', 'category', 'current_stock', 'default_sell_price', 'is_active', 'created_at']
     list_filter = ['is_active', 'category', 'created_at']
     search_fields = ['name', 'category']
     readonly_fields = ['total_value', 'created_at']

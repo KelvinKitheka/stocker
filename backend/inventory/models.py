@@ -26,9 +26,10 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
-    @property
-    def total_value(self):
-        total = self.batches.filter(is_depleted = False).aggregate(total=models.Sum('remaining_quantity'))['total']
+    def current_stock(self):
+        total = self.batches.filter(is_depleted=False).aggregate(
+            total=models.Sum('remaining_quantity')
+        )['total']
         return total or Decimal('0')
 
     @property
