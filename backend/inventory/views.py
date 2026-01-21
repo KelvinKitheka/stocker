@@ -40,3 +40,43 @@ def with_alerts(self, request):
             pass
 
     return Response(alerted)
+
+class StockBatchViewset(viewsets.ModelViewSet):
+    serializer_class = StockBatchSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return StockBatch.objects.filter(product__user = self.request.user)
+    
+    @action(detail=False, methods=['post'])
+    def mark_depleted(self, request, pk=None):
+        batch = self.get_object()
+        depletion_status = request.data.get('status', 'finished')
+
+        if depletion_status == 'finished':
+            batch.mark_depleted('finished')
+        elif depletion_status == 'partly_used':
+            quantity_used = request.data.get('quantity_used', batch.remaining_quantity)
+            PartialDepletion.objects.create(
+                batch = batch,
+                quantity_used = quantity_used,
+                notes = request.data.get('notes', '')
+            )
+            serializer = self.get_serializer(batch)
+            return Response(serializer.data)
+        
+
+    @action(detail=True, methods=['get'])
+    def active(self, request):
+        batches = self.get_queryset().filter(is_depleted=False)
+        serializer = self.get_serializer(batches, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def depleted_today(self, request):
+        today = timezone.now().date()
+        batches = self.get_queryset().filter(
+            is_depleted = True,
+            depleted_at__date = today
+        )
+        return Response({'count': batches.count()})
