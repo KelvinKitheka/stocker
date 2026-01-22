@@ -80,3 +80,17 @@ class StockBatchViewset(viewsets.ModelViewSet):
             depleted_at__date = today
         )
         return Response({'count': batches.count()})
+
+class LowStockAlertViewSet(viewsets.ModelViewSet):
+    serializer_class = LowStockAlertSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return LowStockAlert.objects.all(product__user = self.request.user)
+    
+    @action(detail=False, methods=['get'])
+    def triggered(self, request):
+        alerts = self.get_queryset().filter(is_active=True)
+        triggered = [alert for alert in alerts if alert.is_triggered]
+        serializer = self.get_serializer(triggered, many=True)
+        return Response(serializer.data)
