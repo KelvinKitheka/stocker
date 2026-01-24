@@ -138,3 +138,56 @@ class DashboardViewSet(viewsets.ViewSet):
             except LowStockAlert.DoesNotExist:
                 pass
 
+        # Weekly income
+        weekly_income = StockBatch.objects.filter(
+            product__user = user,
+            is_depleted = True,
+            depleted_at__gte = week_ago
+        ).aggregate(
+            total = Sum(F('quantity') * F('sell_price_per_unit'))
+        )['total'] or 0
+
+        # Weekly profit
+        weekly_profit = StockBatch.objects.filter(
+            product__user = user,
+            is_depleted = True,
+            depleted_at = week_ago
+        ).aggregate(
+            total = Sum(F('quantity') - (F('sell_price_per_unit')- F('buy_price_per_unit')))
+            )['total'] or 0
+        
+       
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
