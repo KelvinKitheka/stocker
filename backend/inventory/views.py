@@ -94,3 +94,47 @@ class LowStockAlertViewSet(viewsets.ModelViewSet):
         triggered = [alert for alert in alerts if alert.is_triggered]
         serializer = self.get_serializer(triggered, many=True)
         return Response(serializer.data)
+    
+
+
+class DashboardViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        user = request.user
+        today = timezone.now().date()
+        week_ago = today - timedelta(days=7)
+
+        # Daily profit from stock depleted today
+        daily_profit = StockBatch.objects.filter(
+            product__user = user,
+            is_depleted = True,
+            deplated_at__date = today
+        ).aggregate(
+            total = Sum(F('quantity') * (F('sell_price_per_unit') - F('buy_price_per_unit')))
+        )['total'] or 0
+
+        # Stock depleted count today
+        depleted_count = StockBatch.objects.filter(
+            product__user = user,
+            is_depleted = True,
+            depleted_at__date = today
+        )
+
+        
+
+
+        # Low stock alerts
+        alerts = []
+        products = LowStockAlert.objects.filter(user = user, is_active = True)
+        for product in products:
+            try:
+                if products.alert.is_active and product.alert.is_triggered:
+                    alerts.append({
+                        'product': product.name,
+                        'remaining': float(product.current_stock),
+                        'threshold': float(product.alert.threshold_quantity)
+                    })
+            except LowStockAlert.DoesNotExist:
+                pass
+
