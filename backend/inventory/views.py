@@ -157,6 +157,30 @@ class DashboardViewSet(viewsets.ViewSet):
             )['total'] or 0
         
        
+        # Product velocity
+        all_batches = StockBatch.objects.filter(product__user = user, is_depleted=True)
+        product_velocities = {}
+        for batch in all_batches:
+            prod_name = batch.product.name
+            if prod_name not in product_velocities:
+                product_velocities[prod_name]  = []
+            product_velocities[prod_name].append(batch.velocity)
+
+        avg_velocities = {
+            name: sum(vels) / len(vels)
+            for name, vels in product_velocities.items()
+        }
+
+        sorted_products = sorted(avg_velocities.items(), key=lambda x: x[1], reverse=True)
+        fast_movers = [
+            {'product': name, 'velocity': round(vel, 2)}
+            for name, vel in sorted_products[:3]
+        ]
+
+        slow_movers = [
+            {'product': name, 'velocity': round(vel, 2)}
+            for name, vel in sorted_products[-3:]
+        ]
 
         
 
