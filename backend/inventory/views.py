@@ -23,23 +23,23 @@ class ProductViewset(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-@action(detail=False, methods=['get'])
-def with_alerts(self, request):
-    products = self.get_queryset()
-    alerted = []
-    for product in products:
-        try:
-            if product.alert.is_active and product.alert.is_triggered:
-                alerted.append({
-                    'id': product.id,
-                    'name': product.name,
-                    'current_stock': float(product.current_stock),
-                    'threshold': float(product.alert.threshold_quantity)
-                })
-        except LowStockAlert.DoesNotExist:
-            pass
+    @action(detail=False, methods=['get'])
+    def with_alerts(self, request):
+        products = self.get_queryset()
+        alerted = []
+        for product in products:
+            try:
+                if product.alert.is_active and product.alert.is_triggered:
+                    alerted.append({
+                        'id': product.id,
+                        'name': product.name,
+                        'current_stock': float(product.current_stock),
+                        'threshold': float(product.alert.threshold_quantity)
+                    })
+            except LowStockAlert.DoesNotExist:
+                pass
 
-    return Response(alerted)
+        return Response(alerted)
 
 class StockBatchViewset(viewsets.ModelViewSet):
     serializer_class = StockBatchSerializer
@@ -181,6 +181,25 @@ class DashboardViewSet(viewsets.ViewSet):
             {'product': name, 'velocity': round(vel, 2)}
             for name, vel in sorted_products[-3:]
         ]
+
+
+        #weekly summary
+        weekly_data = []
+        for i in range(7):
+            day = today - timedelta(days=6-i)
+            day_profit = StockBatch.objects.filter(
+                product__user = user,
+                is_depleted = True,
+                depleted_at__date = day
+            ).aggregate(
+                total = Sum(F('quantity') * (F('sell_price_per_unit') - F('buy_price_per_unit')))
+            )['total'] or 0
+            weekly_data.append({
+                'day': day.strftime('%a'),
+                'profit': float(day_profit)
+            })
+
+
 
         
 
