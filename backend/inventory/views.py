@@ -199,6 +199,24 @@ class DashboardViewSet(viewsets.ViewSet):
                 'profit': float(day_profit)
             })
 
+        turnover_rates = [batch.days_in_stock for batch in all_batches]
+        avg_turnover = sum(turnover_rates) / len(turnover_rates) if turnover_rates else 0
+
+        data = {
+            'daily_profit': day_profit,
+            'stock_depleted': depleted_count,
+            'low_stock_alerts': alerts,
+            'income_this_week': weekly_income,
+            'fast_movers': fast_movers,
+            'slow_movers': slow_movers,
+            'weekly_summary': weekly_data,
+            'total_profit_week': weekly_profit,
+            'avg_stock_turnover': round(avg_turnover, 1)
+        }
+
+        return Response(data)
+
+
 
 
         
