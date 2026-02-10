@@ -17,7 +17,7 @@ class ProductSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at']
 
     def get_current_stock(self, obj):
-        return float(obj.current_stock)
+        return float(obj.current_stock())
     
     def get_total_value(self, obj):
         return float(obj.total_value)
