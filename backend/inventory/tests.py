@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
-from .models import Product
+from .models import Product, StockBatch
 from decimal import Decimal
 
 # Create your tests here.
@@ -23,6 +23,17 @@ class ProductModelTest(TestCase):
         self.assertEqual(self.product.category, 'Dairy')
         self.assertTrue(self.product.is_active)
 
+    # Test current stock calculation
+    def test_product_current_stock(self):
+        StockBatch.objects.create(
+            product = self.product,
+            quantity = Decimal('10'),
+            remaining_quantity = Decimal('10'),
+            buy_price_per_unit = Decimal('100'),
+            sell_price_per_unit = Decimal('120')
+        )
+
+        self.assertEqual(self.product.current_stock, Decimal('10'))
     
     
 
