@@ -33,7 +33,20 @@ class ProductModelTest(TestCase):
             sell_price_per_unit = Decimal('120')
         )
 
-        self.assertEqual(self.product.current_stock, Decimal('10'))
+        self.assertEqual(self.product.current_stock(), Decimal('10'))
+
+    #Test total value calculation
+    def test_product_total_value(self):
+        StockBatch.objects.create(
+            product = self.product,
+            quantity = Decimal('10'),
+            remaining_quantity = Decimal('10'),
+            buy_price_per_unit = Decimal('100'),
+            sell_price_per_unit = Decimal('120')
+        )
+
+        expected_value = Decimal('1000.00')
+        self.assertEqual(self.product.total_value, expected_value)
     
     
 
