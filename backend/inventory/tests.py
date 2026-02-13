@@ -57,7 +57,25 @@ class ProductModelTest(TestCase):
                 category = 'Dairy',
                 default_sell_price = Decimal('120.00')
             )
-    
-    
 
-        
+# Test StockBatch model
+class StockBatchModelTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username = 'testuser',
+            password = 'testpass123'
+        )
+
+        self.product = Product.objects.create(
+            user = self.user,
+            name = 'Milk',
+            default_sell_price = Decimal('60.00')
+        )
+
+        self.batch = StockBatch.objects.create(
+            Product = self.product,
+            quantity = Decimal('20'),
+            remaining_quantity = Decimal('20'),
+            buy_price_per_unit = Decimal('50'),
+            sell_price_per_unit = Decimal('60')
+        )
