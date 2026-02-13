@@ -47,6 +47,16 @@ class ProductModelTest(TestCase):
 
         expected_value = Decimal('1000.00')
         self.assertEqual(self.product.total_value, expected_value)
+
+    # Test product name uniqueness per user
+    def test_unique_product_per_user(self):
+        with self.assertRaises(Exception):
+            Product.objects.create(
+                user = self.user,
+                name = 'Milk',
+                category = 'Dairy',
+                default_sell_price = Decimal('120.00')
+            )
     
     
 
