@@ -73,9 +73,20 @@ class StockBatchModelTest(TestCase):
         )
 
         self.batch = StockBatch.objects.create(
-            Product = self.product,
+            product = self.product,
             quantity = Decimal('20'),
             remaining_quantity = Decimal('20'),
             buy_price_per_unit = Decimal('50'),
             sell_price_per_unit = Decimal('60')
         )
+
+    def test_batch_creation(self):
+        self.assertEqual(self.batch.quantity, Decimal('20'))
+        self.assertEqual(self.batch.remaining_quantity, Decimal('20'))
+        self.assertFalse(self.batch.is_depleted)
+
+    def test_profit_calculations(self):
+        self.assertEqual(self.batch.total_buy_costs, Decimal('1000'))
+        self.assertEqual(self.batch.estimated_revenue, Decimal('1200'))
+        self.assertEqual(self.batch.profit_margin, Decimal('20'))
+        self.assertEqual(self.batch.estimated_profit, Decimal('200'))
