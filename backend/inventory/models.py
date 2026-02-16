@@ -100,7 +100,7 @@ class StockBatch(models.Model):
         self.is_depleted = True
         self.depleted_at = timezone.now()
         if status == 'finished':
-            self.quantity = 0
+            self.remaining_quantity = 0
         self.save()
 
 

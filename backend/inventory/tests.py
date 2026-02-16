@@ -90,3 +90,10 @@ class StockBatchModelTest(TestCase):
         self.assertEqual(self.batch.estimated_revenue, Decimal('1200'))
         self.assertEqual(self.batch.profit_margin, Decimal('20'))
         self.assertEqual(self.batch.estimated_profit, Decimal('200'))
+
+    def test_mark_depleted(self):
+        self.batch.mark_depleted
+        self.assertTrue(self.batch.is_depleted)
+        self.assertEqual(self.batch.remaining_quantity, 0)
+        self.assertIsNotNone(self.batch.depleted_at)
+
