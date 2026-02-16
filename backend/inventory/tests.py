@@ -120,4 +120,26 @@ class StockBatchModelTest(TestCase):
 
         self.assertAlmostEqual(self.batch.velocity, 1.5, places=1)
 
+# Test PartialDepletion model
+class PartialDepletion(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username = 'testuser',
+            password = 'testpass123'
+        )
+
+        self.product = Product.objects.create(
+            user = self.user,
+            name = 'Soda',
+            default_sell_price = Decimal('40')
+        )
+        self.batch = StockBatch.objects.create(
+            product = self.product,
+            quantity = Decimal('24'),
+            remaining_quantity = Decimal('24'),
+            buy_price_per_unit = Decimal('30'),
+            sell_price_per_unit = Decimal('40')
+        )
+
+
 
