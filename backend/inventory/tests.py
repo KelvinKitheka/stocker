@@ -2,6 +2,8 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from .models import Product, StockBatch
 from decimal import Decimal
+from django.utils import timezone
+from datetime import timedelta
 
 # Create your tests here.
 class ProductModelTest(TestCase):
@@ -96,4 +98,26 @@ class StockBatchModelTest(TestCase):
         self.assertTrue(self.batch.is_depleted)
         self.assertEqual(self.batch.remaining_quantity, 0)
         self.assertIsNotNone(self.batch.depleted_at)
+
+    def test_days_in_stock(self):
+        depleted_batch=StockBatch.objects.create(
+            product = self.product,
+            quantity = Decimal('10'),
+            remaining_quantity = Decimal('0'),
+            buy_price_per_unit = Decimal('50'),
+            sell_price_per_unit = Decimal('60'),
+            added_at = timezone.now() - timedelta(days=5),
+            depleted_at = timezone.now(),
+            is_depleted = True
+        )
+
+        self.assertGreaterEqual(depleted_batch.days_in_stock, 5)
+
+    def test_velocity_calculation(self):
+        self.batch.remaining_quantity = Decimal('5')
+        self.batch.added_at = timezone.now() - timedelta(days=10)
+        self.batch.save()
+
+        self.assertAlmostEqual(self.batch.velocity, 1.5, places=1)
+
 
