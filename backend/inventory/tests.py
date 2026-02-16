@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
-from .models import Product, StockBatch
+from .models import Product, StockBatch, PartialDepletion
 from decimal import Decimal
 from django.utils import timezone
 from datetime import timedelta
@@ -121,7 +121,7 @@ class StockBatchModelTest(TestCase):
         self.assertAlmostEqual(self.batch.velocity, 1.5, places=1)
 
 # Test PartialDepletion model
-class PartialDepletion(TestCase):
+class PartialDepletionModelTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username = 'testuser',
@@ -140,6 +140,31 @@ class PartialDepletion(TestCase):
             buy_price_per_unit = Decimal('30'),
             sell_price_per_unit = Decimal('40')
         )
+
+    def test_partial_depletion_updates(self):
+        intial_remaining = self.batch.remaining_quantity
+
+        PartialDepletion.objects.create(
+            batch = self.batch,
+            quantity_used = Decimal('5'),
+        )
+
+        self.batch.refresh_from_db()
+        self.assertEqual(
+            self.batch.remaining_quantity, 
+            intial_remaining - Decimal('5')
+        )
+
+    def test_partial_depletion_marks_batch_depleted(self):
+        PartialDepletion.objects.create(
+            batch=self.batch,
+            quantity_used=Decimal('24')
+        )
+
+        self.batch.refresh_from_db()
+        self.assertTrue(self.batch.is_depleted)
+        self.assertEqual(self.batch.remaining_quantity, 0)
+
 
 
 

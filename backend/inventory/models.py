@@ -120,7 +120,7 @@ class PartialDepletion(models.Model):
         super().save(*args, **kwargs)
         self.batch.remaining_quantity -= self.quantity_used
         if self.batch.remaining_quantity <= 0:
-            self.batch.mark_depleted()
+            self.batch.mark_depleted
         else:
             self.batch.save()
 
