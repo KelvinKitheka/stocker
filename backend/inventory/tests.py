@@ -198,6 +198,17 @@ class LowStockAlertModelTest(TestCase):
 
 
 
+    def test_alert_not_triggered(self):
+        StockBatch.objects.create(
+        product = self.product,
+        quantity = Decimal('20'),
+        remaining_quantity = Decimal('20'),
+        buy_price_per_unit = Decimal('30'),
+        sell_price_per_unit = Decimal('40')
+        ) 
+
+        self.assertFalse(self.alert.is_triggered)  
+
 
 
 
