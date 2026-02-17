@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
-from .models import Product, StockBatch, PartialDepletion
+from .models import Product, StockBatch, PartialDepletion, LowStockAlert
 from decimal import Decimal
 from django.utils import timezone
 from datetime import timedelta
@@ -164,6 +164,35 @@ class PartialDepletionModelTest(TestCase):
         self.batch.refresh_from_db()
         self.assertTrue(self.batch.is_depleted)
         self.assertEqual(self.batch.remaining_quantity, 0)
+
+
+#Test LowStockAlert model
+class LowStockAlertModelTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+
+        self.product = Product.objects.create(
+            user = self.user,
+            name = 'Soda',
+            default_sell_price = Decimal('40'),
+        )
+
+        self.batch = StockBatch.objects.create(
+            product = self.product,
+            quantity = Decimal('24'),
+            remaining_quantity = Decimal('24'),
+            buy_price_per_unit = Decimal('30'),
+            sell_price_per_unit = Decimal('40')
+        )
+
+        self.alert = LowStockAlert.objects.create(
+            product = self.product,
+            threshold_quantity = Decimal('10')
+        )
+
 
 
 
