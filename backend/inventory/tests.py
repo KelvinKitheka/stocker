@@ -182,8 +182,8 @@ class LowStockAlertModelTest(TestCase):
 
         self.batch = StockBatch.objects.create(
             product = self.product,
-            quantity = Decimal('24'),
-            remaining_quantity = Decimal('24'),
+            quantity = Decimal('5'),
+            remaining_quantity = Decimal('5'),
             buy_price_per_unit = Decimal('30'),
             sell_price_per_unit = Decimal('40')
         )
@@ -192,6 +192,10 @@ class LowStockAlertModelTest(TestCase):
             product = self.product,
             threshold_quantity = Decimal('10')
         )
+
+    def test_alert_is_triggered(self):
+        self.assertTrue(self.alert.is_triggered)
+
 
 
 

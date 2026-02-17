@@ -26,6 +26,7 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+
     def current_stock(self):
         total = self.batches.filter(is_depleted=False).aggregate(
             total=models.Sum('remaining_quantity')
@@ -135,4 +136,4 @@ class LowStockAlert(models.Model):
     
     @property
     def is_triggered(self):
-        return self.product.current_stock <= self.threshold_quantity
+        return self.product.current_stock() <= self.threshold_quantity
