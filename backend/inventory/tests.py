@@ -4,7 +4,7 @@ from .models import Product, StockBatch, PartialDepletion, LowStockAlert
 from decimal import Decimal
 from django.utils import timezone
 from datetime import timedelta
-
+from rest_framework.test import APITestCase, APIClient
 # Create your tests here.
 class ProductModelTest(TestCase):
     def setUp(self):
@@ -207,7 +207,25 @@ class LowStockAlertModelTest(TestCase):
         sell_price_per_unit = Decimal('40')
         ) 
 
-        self.assertFalse(self.alert.is_triggered)  
+        self.assertFalse(self.alert.is_triggered) 
+
+#Add ProductAPI tests
+class ProductAPITest(APITestCase):
+    def setup(self):
+        self.user = User.objects.create_user(
+            username = 'testpass',
+            password = 'testuser123'
+        ) 
+
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+
+        self.product_data = {
+            'name' : 'Milk',
+            'category' : 'Food',
+            'default_sell_price' : '60'
+         }
+
 
 
 
