@@ -246,6 +246,13 @@ class ProductAPITest(APITestCase):
         else:
             self.assertEqual(len(response.data), 1)
 
+    def test_get_product_detail(self):
+        product = Product.objects.create(user = self.user, **self.product_data)
+
+        response = self.client.get(f'/api/products/{product.id}/')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['name'], 'Milk')
 
 
 
