@@ -89,7 +89,7 @@ class StockBatchModelTest(TestCase):
         self.assertFalse(self.batch.is_depleted)
 
     def test_profit_calculations(self):
-        self.assertEqual(self.batch.total_buy_costs, Decimal('1000'))
+        self.assertEqual(self.batch.total_buy_cost, Decimal('1000'))
         self.assertEqual(self.batch.estimated_revenue, Decimal('1200'))
         self.assertEqual(self.batch.profit_margin, Decimal('20'))
         self.assertEqual(self.batch.estimated_profit, Decimal('200'))
@@ -275,7 +275,7 @@ class ProductAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
-class StockBatchApiTest(APITestCase):
+class StockBatchAPITest(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username ='testuser',
@@ -297,5 +297,14 @@ class StockBatchApiTest(APITestCase):
             'buy_price_per_unit': '40',
             'sell_price_per_unit': '50'
         }
+
+    def test_create_batch(self):
+        response = self.client.post('/api/batches/', self.batch_data)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(StockBatch.objects.count(), 1)
+        
+        batch = StockBatch.objects.get()
+        self.assertEqual(batch.quantity, batch.remaining_quantity)
 
 

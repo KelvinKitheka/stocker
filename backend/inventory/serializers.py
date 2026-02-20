@@ -32,7 +32,7 @@ class ProductSerializer(serializers.ModelSerializer):
         return obj.average_velocity
     
 class StockBatchSerializer(serializers.ModelSerializer):
-    product_name = serializers.SerializerMethodField()
+    product_name = serializers.CharField(source='product.name', read_only = True)
     estimated_profit = serializers.SerializerMethodField()
     profit_margin = serializers.SerializerMethodField()
     days_in_stock = serializers.SerializerMethodField()
@@ -45,7 +45,7 @@ class StockBatchSerializer(serializers.ModelSerializer):
                 'buy_price_per_unit', 'sell_price_per_unit', 'added_at', 'depleted_at',
                 'is_depleted', 'notes', 'estimated_profit', 'profit_margin', 
                 'days_in_stock', 'velocity', 'total_buy_cost']
-        read_only_fields = ['depleted_at', 'is_depleted']
+        read_only_fields = ['depleted_at', 'is_depleted', 'remaining_quantity']
 
 
     def get_estimated_profit(self, obj):

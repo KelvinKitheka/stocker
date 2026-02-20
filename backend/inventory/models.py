@@ -66,7 +66,7 @@ class StockBatch(models.Model):
         return f"{self.product.name}- {self.quantity} units"
     
     @property
-    def total_buy_costs(self):
+    def total_buy_cost(self):
         return self.buy_price_per_unit * self.quantity
     
     @property
@@ -75,12 +75,12 @@ class StockBatch(models.Model):
     
     @property
     def estimated_profit(self):
-        return self.estimated_revenue - self.total_buy_costs
+        return self.estimated_revenue - self.total_buy_cost
     
     @property
     def profit_margin(self):
-        if self.total_buy_costs > 0:
-            return (self.estimated_profit / self.total_buy_costs) * 100
+        if self.total_buy_cost > 0:
+            return (self.estimated_profit / self.total_buy_cost) * 100
         return 0
     
     @property
