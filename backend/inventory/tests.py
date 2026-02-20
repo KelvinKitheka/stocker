@@ -275,3 +275,27 @@ class ProductAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
+class StockBatchApiTest(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username ='testuser',
+            password ='testpass123'
+        )
+
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+
+        self.product = Product.objects.create(
+            user = self.user,
+            name = 'Milk',
+            default_sell_price = 50
+        )
+
+        self.batch_data = {
+            'product': self.product.id,
+            'quantity' : '10',
+            'buy_price_per_unit': '40',
+            'sell_price_per_unit': '50'
+        }
+
+
