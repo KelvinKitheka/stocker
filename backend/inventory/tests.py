@@ -255,5 +255,23 @@ class ProductAPITest(APITestCase):
         self.assertEqual(response.data['name'], 'Milk')
 
 
+    def test_update_product(self):
+        product = Product.objects.create(user=self.user, **self.product_data)
+
+        response = self.client.patch(
+            f'/api/products/{product.id}/',
+            {'name': 'Maziwa'}
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        product.refresh_from_db()
+        self.assertEqual(product.name, 'Maziwa')
+
+    def test_unauthorized_access(self):
+        self.client.force_authenticate(user=None)
+
+        response = self.client.get('/api/products/')
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
