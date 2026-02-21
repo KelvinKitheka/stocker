@@ -325,3 +325,23 @@ class StockBatchAPITest(APITestCase):
         batch.refresh_from_db()
         self.assertTrue(batch.is_depleted)
 
+    def test_partial_depletion(self):
+        batch = StockBatch.objects.create(
+            product = self.product,
+            quantity = Decimal('10'),
+            remaining_quantity = Decimal('10'),
+            buy_price_per_unit = Decimal('40'),
+            sell_price_per_unit = Decimal('50')
+        )
+
+        response = self.client.post(
+            f'/api/batches/{batch.id}/mark_depleted/',
+            {
+                'status': 'partly_used',
+                'quantity_used': '3'
+                }
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        batch.refresh_from_db()
+        self.assertEqual(batch.remaining_quantity, Decimal('7'))

@@ -119,6 +119,8 @@ class PartialDepletion(models.Model):
     
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
+        if isinstance(self.quantity_used, str):
+            self.quantity_used = Decimal(self.quantity_used)
         self.batch.remaining_quantity -= self.quantity_used
         if self.batch.remaining_quantity <= 0:
             self.batch.mark_depleted()
