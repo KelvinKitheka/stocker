@@ -48,7 +48,7 @@ class StockBatchViewset(viewsets.ModelViewSet):
     def get_queryset(self):
         return StockBatch.objects.filter(product__user = self.request.user)
     
-    @action(detail=False, methods=['post'])
+    @action(detail=True, methods=['post'])
     def mark_depleted(self, request, pk=None):
         batch = self.get_object()
         depletion_status = request.data.get('status', 'finished')
@@ -62,8 +62,8 @@ class StockBatchViewset(viewsets.ModelViewSet):
                 quantity_used = quantity_used,
                 notes = request.data.get('notes', '')
             )
-            serializer = self.get_serializer(batch)
-            return Response(serializer.data)
+        serializer = self.get_serializer(batch)
+        return Response(serializer.data)
         
 
     @action(detail=True, methods=['get'])

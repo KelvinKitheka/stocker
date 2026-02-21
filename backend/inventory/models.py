@@ -96,7 +96,7 @@ class StockBatch(models.Model):
         sold = self.quantity - self.remaining_quantity
         return float(sold) / self.days_in_stock
     
-    @property
+
     def mark_depleted(self, status = 'finished'):
         self.is_depleted = True
         self.depleted_at = timezone.now()
@@ -121,7 +121,7 @@ class PartialDepletion(models.Model):
         super().save(*args, **kwargs)
         self.batch.remaining_quantity -= self.quantity_used
         if self.batch.remaining_quantity <= 0:
-            self.batch.mark_depleted
+            self.batch.mark_depleted()
         else:
             self.batch.save()
 

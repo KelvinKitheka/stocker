@@ -95,7 +95,7 @@ class StockBatchModelTest(TestCase):
         self.assertEqual(self.batch.estimated_profit, Decimal('200'))
 
     def test_mark_depleted(self):
-        self.batch.mark_depleted
+        self.batch.mark_depleted()
         self.assertTrue(self.batch.is_depleted)
         self.assertEqual(self.batch.remaining_quantity, 0)
         self.assertIsNotNone(self.batch.depleted_at)
@@ -307,4 +307,21 @@ class StockBatchAPITest(APITestCase):
         batch = StockBatch.objects.get()
         self.assertEqual(batch.quantity, batch.remaining_quantity)
 
+    def test_mark_depleted(self):
+        batch = StockBatch.objects.create(
+            product = self.product,
+            quantity = Decimal('10'),
+            remaining_quantity = Decimal('10'),
+            buy_price_per_unit = Decimal('40'),
+            sell_price_per_unit = Decimal('50')
+        )
+
+        response = self.client.post(
+            f'/api/batches/{batch.id}/mark_depleted/',
+            {'status': 'finished'}
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        batch.refresh_from_db()
+        self.assertTrue(batch.is_depleted)
 
