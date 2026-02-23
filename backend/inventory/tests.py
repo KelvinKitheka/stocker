@@ -345,3 +345,25 @@ class StockBatchAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         batch.refresh_from_db()
         self.assertEqual(batch.remaining_quantity, Decimal('7'))
+
+    def test_get_active_batches(self):
+        StockBatch.objects.create(
+            product = self.product,
+            quantity = Decimal('10'),
+            remaining_quantity = Decimal('10'),
+            buy_price_per_unit = Decimal('40'),
+            sell_price_per_unit = Decimal('50')
+        )
+
+        StockBatch.objects.create(
+            product = self.product,
+            quantity = Decimal('5'),
+            remaining_quantity = Decimal('0'),
+            buy_price_per_unit = Decimal('40'),
+            sell_price_per_unit = Decimal('50')
+        )
+
+        response = self.client.get('/api/batches/active/')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)

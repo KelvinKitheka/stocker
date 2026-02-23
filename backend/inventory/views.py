@@ -66,9 +66,9 @@ class StockBatchViewset(viewsets.ModelViewSet):
         return Response(serializer.data)
         
 
-    @action(detail=True, methods=['get'])
+    @action(detail=False, methods=['get'])
     def active(self, request):
-        batches = self.get_queryset().filter(is_depleted=False)
+        batches = self.get_queryset().filter(remaining_quantity__gt = 0)
         serializer = self.get_serializer(batches, many=True)
         return Response(serializer.data)
     
