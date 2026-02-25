@@ -367,3 +367,28 @@ class StockBatchAPITest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
+
+class DashboardAPITest(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+
+        self.product1 = Product.objects.create(
+            user = self.user,
+            name = "Milk",
+            default_sell_price = Decimal('50')
+        )
+
+        StockBatch.objects.create(
+            product = self.product1,
+            quantity = Decimal('10'),
+            remaining_quantity = Decimal('0'),
+            buy_price_per_unit = Decimal('40'),
+            sell_price_per_unit = Decimal('50'),
+            is_depleted = True,
+            depleted_at = timezone.now()
+        )
