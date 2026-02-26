@@ -404,3 +404,13 @@ class DashboardAPITest(APITestCase):
         self.assertIn('fast_movers', response.data)
         self.assertIn('slow_movers', response.data)
         self.assertIn('weekly_summary', response.data)
+
+    def test_daily_profit_calculation(self):
+        response = self.client.get('/api/dashboard/')
+
+        self.assertEqual(response.data['daily_profit'], Decimal('100.00'))
+
+    def test_stock_depleted_count(self):
+        response = self.client.get('/api/dashboard/')
+
+        self.assertEqual(response.data['stock_depleted'], 1)
