@@ -392,3 +392,15 @@ class DashboardAPITest(APITestCase):
             is_depleted = True,
             depleted_at = timezone.now()
         )
+
+    def test_dashboard_stats(self):
+        response = self.client.get('/api/dashboard/')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('daily_profit', response.data)
+        self.assertIn('stock_depleted', response.data)
+        self.assertIn('low_stock_alerts', response.data)
+        self.assertIn('income_this_week', response.data)
+        self.assertIn('fast_movers', response.data)
+        self.assertIn('slow_movers', response.data)
+        self.assertIn('weekly_summary', response.data)

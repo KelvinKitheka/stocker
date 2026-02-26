@@ -109,7 +109,7 @@ class DashboardViewSet(viewsets.ViewSet):
         daily_profit = StockBatch.objects.filter(
             product__user = user,
             is_depleted = True,
-            deplated_at__date = today
+            depleted_at__date = today
         ).aggregate(
             total = Sum(F('quantity') * (F('sell_price_per_unit') - F('buy_price_per_unit')))
         )['total'] or 0
@@ -119,14 +119,14 @@ class DashboardViewSet(viewsets.ViewSet):
             product__user = user,
             is_depleted = True,
             depleted_at__date = today
-        )
+        ).count()
 
         
 
 
         # Low stock alerts
         alerts = []
-        products = LowStockAlert.objects.filter(user = user, is_active = True)
+        products = LowStockAlert.objects.filter(product__user = user, is_active = True)
         for product in products:
             try:
                 if products.alert.is_active and product.alert.is_triggered:
@@ -215,40 +215,4 @@ class DashboardViewSet(viewsets.ViewSet):
         }
 
         return Response(data)
-
-
-
-
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
