@@ -444,3 +444,16 @@ class AuthenticationTest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
+    def test_token_refresh(self):
+        login_response = self.client.post(self.login_url, {
+            'username': 'testuser',
+            'password': 'testpass123'
+        })
+
+        refresh_token = login_response.data['refresh']
+
+        refresh_response = self.client.post('/api/token/refresh/', {'refresh': refresh_token})
+
+        self.assertEqual(refresh_response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', refresh_response.data)
+
