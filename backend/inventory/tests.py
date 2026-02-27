@@ -414,3 +414,26 @@ class DashboardAPITest(APITestCase):
         response = self.client.get('/api/dashboard/')
 
         self.assertEqual(response.data['stock_depleted'], 1)
+
+
+class AuthenticationTest(APITestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username = 'testuser',
+            password = 'testpass123'
+        )
+
+        self.login_url = ('/api/token/')
+
+    def test_login_success(self):
+        response = self.client.post(self.login_url, {
+            'username': 'testuser',
+            'password': 'testpass123'
+        })
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', response.data)
+        self.assertIn('refresh', response.data)
+
+
