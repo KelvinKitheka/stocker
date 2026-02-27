@@ -436,4 +436,11 @@ class AuthenticationTest(APITestCase):
         self.assertIn('access', response.data)
         self.assertIn('refresh', response.data)
 
+    def test_login_failure(self):
+        response = self.client.post(self.login_url, {
+            'username': 'testuser',
+            'password': 'pass'
+        })
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
