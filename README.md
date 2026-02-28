@@ -86,6 +86,21 @@ npm run dev
     Backend API: http://localhost:8000
     Admin Panel: http://localhost:8000/admin
 
+## Testing
+
+### Backend Tests
+```bash
+# Activate virtual environment
+source backend/stock/bin/activate
+
+# Run tests for the inventory
+python manage.py test inventory
+
+# Run with verbosity
+python manage.py test --verbosity=2
+```
+
+
 ## API Endpoints
 ### Authentication
 
