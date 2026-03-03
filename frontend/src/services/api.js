@@ -47,9 +47,28 @@ api.interceptors.response.use(
                 localStorage.removeItem('access_token');
                 localStorage.removeItem('refresh_token');
                 window.location.href = '/login';
-                return Promise.reject(refreshError)
+                return Promise.reject(refreshError);
             }
         }
         return Promise.reject(error)
     }
 );
+
+export const login = async (username, password) => {
+    const response = await axios.post(`${API_BASE_URL.replace('/api', '')}/api/token/`, {
+        username,
+        password
+    })
+
+    localStorage.setItem('access_token', response.data.access);
+    localStorage.setItem('refresh_token', response.data.refresh);
+
+    return response.data;
+};
+
+export const logout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+};
+
+export default api
