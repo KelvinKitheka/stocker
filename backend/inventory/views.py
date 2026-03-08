@@ -203,6 +203,10 @@ class DashboardViewSet(viewsets.ViewSet):
         avg_turnover = sum(turnover_rates) / len(turnover_rates) if turnover_rates else 0
 
         data = {
+            'user': {
+                'first_name': user.first_name,
+                'username': user.username
+            },
             'daily_profit': day_profit,
             'stock_depleted': depleted_count,
             'low_stock_alerts': alerts,
