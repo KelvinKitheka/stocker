@@ -2,6 +2,7 @@ import React, { useState, useEffect} from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import  Sidebar  from "./components/Sidebar";
+import Dashboard from "./pages/Dashboard";
 
 
 function App() {
@@ -9,7 +10,7 @@ function App() {
   const [ loading, setLoading ] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('access_token');
     setAuthenticated(!!token);
     setLoading(false);
 
@@ -26,6 +27,18 @@ function App() {
        <div className="flex-1">
 
         <Routes>
+
+          <Route
+            path="/"
+            element={
+              authenticated ? ( 
+              <Dashboard /> 
+            ) : (
+              < Navigate to="/login" replace />
+            )
+            }
+          />
+
           <Route
             path="/login"
             element = {

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Package } from 'lucide-react';
 import { login } from '../services/api';
 
 const Login = ({ onLogin }) => {
+    const navigate = useNavigate();
     const [ formData, setFormData ] = useState({
         'username': '',
         'password': ''
@@ -19,6 +21,7 @@ const Login = ({ onLogin }) => {
         try {
             await login(formData.username, formData.password);
             onLogin();
+            navigate('/', { replace:true });
         } catch (err) {
             setError('Invalid username or password');
             setLoading(false);
