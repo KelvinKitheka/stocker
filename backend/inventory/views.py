@@ -126,13 +126,13 @@ class DashboardViewSet(viewsets.ViewSet):
 
         # Low stock alerts
         alerts = []
-        products = LowStockAlert.objects.filter(product__user = user, is_active = True)
+        products = Product.objects.filter(user = user, is_active = True)
         for product in products:
             try:
-                if products.alert.is_active and product.alert.is_triggered:
+                if product.alert.is_active and product.alert.is_triggered:
                     alerts.append({
                         'product': product.name,
-                        'remaining': float(product.current_stock),
+                        'remaining': float(product.current_stock()),
                         'threshold': float(product.alert.threshold_quantity)
                     })
             except LowStockAlert.DoesNotExist:
