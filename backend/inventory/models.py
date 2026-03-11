@@ -67,10 +67,14 @@ class StockBatch(models.Model):
     
     @property
     def total_buy_cost(self):
+        if self.buy_price_per_unit is None or self.quantity is None:
+            return Decimal('0')
         return self.buy_price_per_unit * self.quantity
     
     @property
     def estimated_revenue(self):
+        if self.sell_price_per_unit is None or self.quantity is None:
+            return Decimal('0')
         return self.quantity * self.sell_price_per_unit
     
     @property
@@ -93,6 +97,8 @@ class StockBatch(models.Model):
     
     @property
     def velocity(self):
+        if self.quantity is None or self.remaining_quantity is None:
+            return 0.0
         sold = self.quantity - self.remaining_quantity
         return float(sold) / self.days_in_stock
     
@@ -118,7 +124,6 @@ class PartialDepletion(models.Model):
         return f"{self.batch.product.name} - {self.quantity_used} used"
     
     def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
         if isinstance(self.quantity_used, str):
             self.quantity_used = Decimal(self.quantity_used)
         self.batch.remaining_quantity -= self.quantity_used
@@ -126,7 +131,8 @@ class PartialDepletion(models.Model):
             self.batch.mark_depleted()
         else:
             self.batch.save()
-
+        super().save(*args, **kwargs)
+    
 class LowStockAlert(models.Model):
     product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name='alert')
     threshold_quantity = models.DecimalField(max_digits=10,  decimal_places=2)

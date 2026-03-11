@@ -86,7 +86,7 @@ class LowStockAlertViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return LowStockAlert.objects.all(product__user = self.request.user)
+        return LowStockAlert.objects.filter(product__user = self.request.user)
     
     @action(detail=False, methods=['get'])
     def triggered(self, request):
