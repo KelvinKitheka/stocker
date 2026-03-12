@@ -2,6 +2,7 @@ import { Package, AlertTriangle, Plus } from "lucide-react";
 import React, { useState, useEffect} from "react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 import api from "../services/api";
+import AddStockModal from "../components/AddStockModal";
 
 const Dashboard = () => {
     const [ dashData, setDashData ] = useState(null);
@@ -238,7 +239,16 @@ const Dashboard = () => {
                     </div>
                 </div>
             </div>
-            
+            { showAddStock && (
+                <AddStockModal
+                onClose={() => setShowAddStock(false)}
+                onSuccess={() => {
+                    setShowAddStock(false);
+                    fetchDashboard();
+                }}
+                />
+
+            )}
             
         </div>
     )
