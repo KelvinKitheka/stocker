@@ -68,10 +68,12 @@ class StockBatchViewset(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def active(self, request):
-        batches = self.get_queryset().filter(remaining_quantity__gt = 0)
-        serializer = self.get_serializer(batches, many=True)
-        return Response(serializer.data)
-    
+        batches = self.get_queryset().filter(remaining_quantity__gt = 0
+        ).values('product__id', 'product__name').annotate(
+        total_remaining=Sum('remaining_quantity')
+        )
+        return Response(list(batches))
+
     @action(detail=False, methods=['get'])
     def depleted_today(self, request):
         today = timezone.now().date()
@@ -202,6 +204,13 @@ class DashboardViewSet(viewsets.ViewSet):
         turnover_rates = [batch.days_in_stock for batch in all_batches]
         avg_turnover = sum(turnover_rates) / len(turnover_rates) if turnover_rates else 0
 
+        # Active batches
+        active_batches = StockBatch.objects.filter(
+            product__user = user,
+            is_depleted = False,
+            remaining_quantity__gt = 0).values('id', 'remaining_quantity', 'product__name')
+
+
         data = {
             'user': {
                 'first_name': user.first_name,
@@ -215,7 +224,8 @@ class DashboardViewSet(viewsets.ViewSet):
             'slow_movers': slow_movers,
             'weekly_summary': weekly_data,
             'total_profit_week': weekly_profit,
-            'avg_stock_turnover': round(avg_turnover, 1)
+            'avg_stock_turnover': round(avg_turnover, 1),
+            'active_batches': list(active_batches)
         }
 
         return Response(data)
