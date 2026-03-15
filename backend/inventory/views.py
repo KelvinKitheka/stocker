@@ -40,6 +40,31 @@ class ProductViewset(viewsets.ModelViewSet):
                 pass
 
         return Response(alerted)
+    
+    @action(detail=True, methods=['post'])
+    def deplete(self, request, pk = None):
+        product = self.get_object()
+        status = request.data.get('status', 'finished')
+        quantity_used = request.data.get('quantity_used')
+
+        batch = StockBatch.objects.filter(
+            product = product,
+            is_depleted = False,
+            remaining_quantity__gt = 0
+        ).order_by('added_at').first()
+
+        if not batch:
+            return Response({'error': 'No active stock found'}, status=404)
+        
+        if status == 'finished':
+            batch.mark_depleted('finished')
+        elif status == 'partly_used':
+            PartialDepletion.objects.create(
+                batch=batch,
+                quantity_used=quantity_used or batch.remaining_quantity,
+                notes = request.data.get('notes', '')
+            )
+        return Response({'success': True, 'batch_id': batch.id})
 
 class StockBatchViewset(viewsets.ModelViewSet):
     serializer_class = StockBatchSerializer
@@ -113,7 +138,7 @@ class DashboardViewSet(viewsets.ViewSet):
             is_depleted = True,
             depleted_at__date = today
         ).aggregate(
-            total = Sum(F('quantity') * (F('sell_price_per_unit') - F('buy_price_per_unit')))
+            total = Sum((F('quantity') -F('remaining_quantity')) * (F('sell_price_per_unit') - F('buy_price_per_unit')))
         )['total'] or 0
 
         # Stock depleted count today
@@ -155,7 +180,7 @@ class DashboardViewSet(viewsets.ViewSet):
             is_depleted = True,
             depleted_at__gte = week_ago
         ).aggregate(
-            total = Sum(F('quantity') * (F('sell_price_per_unit')- F('buy_price_per_unit')))
+            total = Sum((F('quantity')- F('remaining_quantity')) * (F('sell_price_per_unit')- F('buy_price_per_unit')))
             )['total'] or 0
         
        
@@ -194,7 +219,7 @@ class DashboardViewSet(viewsets.ViewSet):
                 is_depleted = True,
                 depleted_at__date = day
             ).aggregate(
-                total = Sum(F('quantity') * (F('sell_price_per_unit') - F('buy_price_per_unit')))
+                total = Sum((F('quantity') - F('remaining_quantity')) * (F('sell_price_per_unit') - F('buy_price_per_unit')))
             )['total'] or 0
             weekly_data.append({
                 'day': day.strftime('%a'),
@@ -216,7 +241,7 @@ class DashboardViewSet(viewsets.ViewSet):
                 'first_name': user.first_name,
                 'username': user.username
             },
-            'daily_profit': day_profit,
+            'daily_profit': daily_profit,
             'stock_depleted': depleted_count,
             'low_stock_alerts': alerts,
             'income_this_week': weekly_income,
