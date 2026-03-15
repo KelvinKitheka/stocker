@@ -3,6 +3,7 @@ import React, { useState, useEffect} from "react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 import api from "../services/api";
 import AddStockModal from "../components/AddStockModal";
+import DepletionModal from "../components/DepletionModal";
 
 const Dashboard = () => {
     const [ dashData, setDashData ] = useState(null);
@@ -10,7 +11,6 @@ const Dashboard = () => {
     const [ showDepletion, setShowDepletion ] = useState(false);
     const [ selectedBatch, setSelectedBatch ] = useState(null);
     const [ loading, setLoading ] = useState(true);
-    const [ user, setUser ] = useState();
 
     useEffect(() => {
         fetchDashboard();
@@ -25,11 +25,6 @@ const Dashboard = () => {
             console.error('Error fetching dashboard:', error);
             setLoading(false);
         }
-    };
-
-    const openDepletionModal = (batch) =>  {
-        setSelectedBatch(batch);
-        setShowDepletion(true);
     };
 
     if (loading) {
@@ -90,9 +85,13 @@ const Dashboard = () => {
                         <Plus className="w-5 h-5"/>
                         Add New Stock
                     </button>
-                    <button className="bg-orange-500 text-white py-6 rounded-lg font-semibold hover:bg-orange-600 transition">
+                    
+                    <button 
+                    onClick={() => {setShowDepletion(true)}}
+                    className="bg-orange-500 text-white py-6 rounded-lg font-semibold hover:bg-orange-600 transition">
                         Mark Stock Depleted
                     </button>
+                    
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="space-y-6">
@@ -128,7 +127,7 @@ const Dashboard = () => {
                                             {dashData?.fast_movers?.[0]?.product || 'N/A'}
                                         </div>
                                         <div className="text-sm font-gray-600">
-                                            {dashData?.fast_movers?.[0]?.velocity.toFixed(1) || 0} days 
+                                            {dashData?.fast_movers?.[0]?.velocity.toFixed(1) || 0} units/days 
                                         </div>
                                     </div>
                                 </div>
@@ -139,7 +138,7 @@ const Dashboard = () => {
                                             {dashData?.slow_movers?.[0]?.product || 'N/A'}
                                         </div>
                                         <div className="text-sm text-red-600">
-                                            {dashData?.slow_movers?.[0]?.velocity?.toFixed(1) || 0} days
+                                            {dashData?.slow_movers?.[0]?.velocity?.toFixed(1) || 0} units/days
                                         </div>
                                     </div>
                                 </div>
@@ -247,8 +246,18 @@ const Dashboard = () => {
                     fetchDashboard();
                 }}
                 />
-
             )}
+
+        {showDepletion && (
+            <DepletionModal
+            batch={selectedBatch}
+            onClose={() => setShowDepletion(false)}
+            onSuccess={() => {
+                setShowDepletion(false);
+                fetchDashboard();
+            }}
+            />
+        )}
             
         </div>
     )

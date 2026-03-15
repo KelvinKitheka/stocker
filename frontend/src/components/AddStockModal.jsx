@@ -198,7 +198,7 @@ const AddStockModal = ({ onClose, onSuccess}) => {
                     required
                     min="0"
                     step="1"
-                    className="w-full border border-gray-300 rounded-lg p-3 pl-14 focus-ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    className="w-full border border-gray-300 rounded-lg p-3 pl-14 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                     />
                 </div>
             </div>
