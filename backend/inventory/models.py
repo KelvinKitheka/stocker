@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.contrib.auth.models import User
 from django.utils import timezone
 from decimal import Decimal
@@ -124,14 +124,16 @@ class PartialDepletion(models.Model):
         return f"{self.batch.product.name} - {self.quantity_used} used"
     
     def save(self, *args, **kwargs):
-        if isinstance(self.quantity_used, str):
-            self.quantity_used = Decimal(self.quantity_used)
-        self.batch.remaining_quantity -= self.quantity_used
-        if self.batch.remaining_quantity <= 0:
-            self.batch.mark_depleted()
-        else:
-            self.batch.save()
-        super().save(*args, **kwargs)
+        with transaction.atomic():
+            if isinstance(self.quantity_used, str):
+                self.quantity_used = Decimal(self.quantity_used)
+            self.batch.remaining_quantity -= self.quantity_used
+            if self.batch.remaining_quantity <= 0:
+                self.batch.remaining_quantity = Decimal('0')
+                self.batch.mark_depleted()
+            else:
+                self.batch.save()
+            super().save(*args, **kwargs)
     
 class LowStockAlert(models.Model):
     product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name='alert')
