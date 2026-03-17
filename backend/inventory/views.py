@@ -3,7 +3,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum, Q, Avg, F, Count
+from django.db.models import Sum, Q, Avg, F, Count, ExpressionWrapper, DecimalField
 from django.utils import timezone
 from datetime import timedelta
 from .models import Product, StockBatch, PartialDepletion, LowStockAlert
@@ -132,19 +132,26 @@ class DashboardViewSet(viewsets.ViewSet):
         today = timezone.now().date()
         week_ago = today - timedelta(days=7)
 
-        # Daily profit from stock depleted today
-        daily_profit = StockBatch.objects.filter(
+        profit_expr = ExpressionWrapper(
+            (F('quantity') - F('remaining_quantity')) *
+            (F('sell_price_per_unit') - F('buy_price_per_unit')),
+            output_field=DecimalField(max_digits=20, decimal_places=2)
+        )
+
+        depleted_qs = StockBatch.objects.filter(
             product__user = user,
-            is_depleted = True,
+            is_depleted = True
+        )
+
+        # Daily profit from stock depleted today
+        daily_profit = depleted_qs.filter(
             depleted_at__date = today
         ).aggregate(
-            total = Sum((F('quantity') -F('remaining_quantity')) * (F('sell_price_per_unit') - F('buy_price_per_unit')))
+            total = Sum(profit_expr)
         )['total'] or 0
 
         # Stock depleted count today
-        depleted_count = StockBatch.objects.filter(
-            product__user = user,
-            is_depleted = True,
+        depleted_count = depleted_qs.filter(
             depleted_at__date = today
         ).count()
 
@@ -166,21 +173,17 @@ class DashboardViewSet(viewsets.ViewSet):
                 pass
 
         # Weekly income
-        weekly_income = StockBatch.objects.filter(
-            product__user = user,
-            is_depleted = True,
+        weekly_income = depleted_qs.filter(
             depleted_at__gte = week_ago
         ).aggregate(
             total = Sum(F('quantity') * F('sell_price_per_unit'))
         )['total'] or 0
 
         # Weekly profit
-        weekly_profit = StockBatch.objects.filter(
-            product__user = user,
-            is_depleted = True,
+        weekly_profit = depleted_qs.filter(
             depleted_at__gte = week_ago
         ).aggregate(
-            total = Sum((F('quantity')- F('remaining_quantity')) * (F('sell_price_per_unit')- F('buy_price_per_unit')))
+            total = Sum(profit_expr)
             )['total'] or 0
         
        
