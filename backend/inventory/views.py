@@ -7,6 +7,8 @@ from django.db.models import Sum, Q, Avg, F, Count, ExpressionWrapper, DecimalFi
 from django.utils import timezone
 from datetime import timedelta
 from .models import Product, StockBatch, PartialDepletion, LowStockAlert
+from django.db.models.functions import TruncDate
+from decimal import Decimal
 from .serializers import (
     ProductSerializer, StockBatchSerializer, PartialDepletionSerializer,
     LowStockAlertSerializer, DashboardSerializer
@@ -201,6 +203,47 @@ class DashboardViewSet(viewsets.ViewSet):
             for name, vels in product_velocities.items()
         }
 
+        # weekly summary
+        daily_rows = depleted_qs.filter(
+            depleted_at__date__gte = week_ago
+        ).annotate(
+            day = TruncDate('depleted_at')
+        ).values('day').annotate(
+            profit=Sum(profit_expr)
+        ).order_by('day')
+
+        profit_by_day ={row['day']: row['profit'] for row in daily_rows}
+        weekly_data = []
+        for i in range(7):
+            day = week_ago + timedelta(days=i)
+            weekly_data.append({
+                'day': day.strftime('%a'),
+                'profit': profit_by_day.get(day, Decimal('0'))
+            })
+
+        velocity_rows = depleted_qs.values(
+            'product__name', 'added_at', 'depleted_at'
+        ).annotate(
+            sold=ExpressionWrapper(
+                F('quantity') - F('remaining_quantity'),
+                output_field=DecimalField(max_digits=20, decimal_places=2)
+            )
+        )
+
+        product_velocity_map = {}
+        turnover_days = []
+
+        for row in velocity_rows:
+            delta = row['depleted_at'] - row['added_at']
+            days = max(delta.days, 1)
+            turnover_days.append(days)
+            vel = float(row['sold']) / days
+            name = row['product__name']
+            if name not in product_velocity_map:
+                product_velocity_map[name] = []
+            product_velocity_map[name].append(vel)
+             
+
         sorted_products = sorted(avg_velocities.items(), key=lambda x: x[1], reverse=True)
         fast_movers = [
             {'product': name, 'velocity': round(vel, 2)}
@@ -213,21 +256,6 @@ class DashboardViewSet(viewsets.ViewSet):
         ]
 
 
-        #weekly summary
-        weekly_data = []
-        for i in range(7):
-            day = today - timedelta(days=6-i)
-            day_profit = StockBatch.objects.filter(
-                product__user = user,
-                is_depleted = True,
-                depleted_at__date = day
-            ).aggregate(
-                total = Sum((F('quantity') - F('remaining_quantity')) * (F('sell_price_per_unit') - F('buy_price_per_unit')))
-            )['total'] or 0
-            weekly_data.append({
-                'day': day.strftime('%a'),
-                'profit': float(day_profit)
-            })
 
         turnover_rates = [batch.days_in_stock for batch in all_batches]
         avg_turnover = sum(turnover_rates) / len(turnover_rates) if turnover_rates else 0
