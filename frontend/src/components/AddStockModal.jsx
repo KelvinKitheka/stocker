@@ -51,7 +51,7 @@ const AddStockModal = ({ onClose, onSuccess}) => {
             onSuccess();
         } catch(error) {
             console.error('Error adding stock:', error);
-            alert('Failed to add stock.Please try again.')
+            alert('Failed to add stock. Ensure product does not exist.')
         }
     };
 

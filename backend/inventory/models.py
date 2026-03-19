@@ -101,6 +101,16 @@ class StockBatch(models.Model):
             return 0.0
         sold = self.quantity - self.remaining_quantity
         return float(sold) / self.days_in_stock
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        if is_new:
+            threshold = self.quantity / Decimal('5')
+            LowStockAlert.objects.get_or_create(
+                product=self.product,
+                defaults = {'threshold_quantity': threshold}
+            )
     
 
     def mark_depleted(self, status = 'finished'):
@@ -133,7 +143,17 @@ class PartialDepletion(models.Model):
                 self.batch.mark_depleted()
             else:
                 self.batch.save()
+                self.update_alert_threshold()
             super().save(*args, **kwargs)
+
+    def update_alert_threshold(self):
+        total_stock = self.batch.product.current_stock()
+        if total_stock > 0:
+            new_threshold = total_stock / Decimal('5')
+            LowStockAlert.objects.update_or_create(
+                product = self.batch.product,
+                defaults={'threshold_quantity': new_threshold}
+            )
     
 class LowStockAlert(models.Model):
     product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name='alert')

@@ -176,32 +176,18 @@ class DashboardViewSet(viewsets.ViewSet):
 
         # Weekly income
         weekly_income = depleted_qs.filter(
-            depleted_at__gte = week_ago
+            depleted_at__date__gte = week_ago
         ).aggregate(
             total = Sum(F('quantity') * F('sell_price_per_unit'))
         )['total'] or 0
 
         # Weekly profit
         weekly_profit = depleted_qs.filter(
-            depleted_at__gte = week_ago
+            depleted_at__date__gte = week_ago
         ).aggregate(
             total = Sum(profit_expr)
             )['total'] or 0
         
-       
-        # Product velocity
-        all_batches = StockBatch.objects.filter(product__user = user, is_depleted=True)
-        product_velocities = {}
-        for batch in all_batches:
-            prod_name = batch.product.name
-            if prod_name not in product_velocities:
-                product_velocities[prod_name]  = []
-            product_velocities[prod_name].append(batch.velocity)
-
-        avg_velocities = {
-            name: sum(vels) / len(vels)
-            for name, vels in product_velocities.items()
-        }
 
         # weekly summary
         daily_rows = depleted_qs.filter(
@@ -242,7 +228,13 @@ class DashboardViewSet(viewsets.ViewSet):
             if name not in product_velocity_map:
                 product_velocity_map[name] = []
             product_velocity_map[name].append(vel)
-             
+
+        
+        avg_turnover = sum(turnover_days) / len(turnover_days) if turnover_days else 0
+        avg_velocities = {
+            name: sum(vels) / len(vels)
+            for name, vels in product_velocity_map.items()
+        }
 
         sorted_products = sorted(avg_velocities.items(), key=lambda x: x[1], reverse=True)
         fast_movers = [
@@ -256,9 +248,6 @@ class DashboardViewSet(viewsets.ViewSet):
         ]
 
 
-
-        turnover_rates = [batch.days_in_stock for batch in all_batches]
-        avg_turnover = sum(turnover_rates) / len(turnover_rates) if turnover_rates else 0
 
         # Active batches
         active_batches = StockBatch.objects.filter(

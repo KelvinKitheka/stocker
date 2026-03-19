@@ -16,6 +16,14 @@ class ProductSerializer(serializers.ModelSerializer):
         'total_value', 'is_active', 'created_at', 'has_alert', 'average_velocity']
         read_only_fields = ['created_at']
 
+    def validate_name(self, value):
+        user = self.context['request'].user
+        if Product.objects.filter(user=user, name__iexact = value, is_active=True).exists():
+            raise serializers.ValidationError(
+                f"You already have a product called '{value}'. Select it from dropdown instead"
+            )
+        return value
+
     def get_current_stock(self, obj):
         return float(obj.current_stock())
     
