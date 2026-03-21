@@ -7,7 +7,7 @@ from django.db.models import Sum, Q, Avg, F, Count, ExpressionWrapper, DecimalFi
 from django.utils import timezone
 from datetime import timedelta
 from .models import Product, StockBatch, PartialDepletion, LowStockAlert
-from django.db.models.functions import TruncDate
+from django.db.models.functions import TruncDate, TruncMonth
 from decimal import Decimal
 from .serializers import (
     ProductSerializer, StockBatchSerializer, PartialDepletionSerializer,
@@ -131,6 +131,28 @@ class LowStockAlertViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(triggered, many=True)
         return Response(serializer.data)
     
+
+class ReportViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+    
+    def profit_expr(self):
+        return ExpressionWrapper(
+            (F('quantity') - F('remaining_quantity')) * (F('buy_price_per_unit') - F('sell_price_per_unit')),
+            output_field=DecimalField(max_digits=20, decimal_places=2)
+        )
+
+    def revenue_expr(self):
+        return ExpressionWrapper(
+            (F('quantity') - F('remaining_quantity')) * (F('sell_price_per_unit')),
+            output_field=DecimalField(max_digits=20, decimal_places=2)
+        )
+    
+
+    def cost_expr(self):
+        return ExpressionWrapper(
+            (F('quantity') - F('remaining_quantity')) * (F('buy_price_per_unit')),
+            output_field=DecimalField(max_digits=20, decimal_places=2)
+        )
 
 
 class DashboardViewSet(viewsets.ViewSet):
