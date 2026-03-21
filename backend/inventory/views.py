@@ -153,6 +153,37 @@ class ReportViewSet(viewsets.ViewSet):
             (F('quantity') - F('remaining_quantity')) * (F('buy_price_per_unit')),
             output_field=DecimalField(max_digits=20, decimal_places=2)
         )
+    
+    def list(self):
+        user = self.request.user
+        all_batches = StockBatch.objects.filter(product__user = user)
+        depleted = all_batches.filter(is_depleted=True)
+
+        total_revenue = depleted.aggregate(v=Sum(self.revenue_expr()))['v'] or Decimal('0')
+        total_cost = depleted.aggregate(v=Sum(self.cost_expr()))['v'] or Decimal('0')
+        total_profit = total_revenue - total_cost
+        overall_margin = round((total_profit / total_cost) * 100, 1) if total_cost > 0 else 0
+
+        active_value = sum(
+            b.remaining_quantity * b.buy_price_per_unit
+            for b in all_batches.filter(is_depleted = False)
+        )
+
+        total_batches = all_batches.count()
+        depleted_batches = depleted.count()
+        active_batches = total_batches- depleted_batches
+
+        return Response({
+            'total_revenue': total_revenue,
+            'total_cost': total_cost,
+            'total_profit': total_profit,
+            'overall_margin': overall_margin,
+            'active_stock_value': active_value,
+            'total_batches': total_batches,
+            'depleted_batches': depleted_batches,
+            'active_batches': active_batches
+        })
+
 
 
 class DashboardViewSet(viewsets.ViewSet):
