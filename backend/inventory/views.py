@@ -184,6 +184,41 @@ class ReportViewSet(viewsets.ViewSet):
             'active_batches': active_batches
         })
 
+    @action(detail = False, methods=['get'])
+    def by_product(self, request):
+        user = request.user
+        depleted = StockBatch.objects.filter(product__user = user, is_depleted = True)
+        rows = depleted.values(
+            'product__id', 'product__name', 'product__category'
+        ).annotate(
+            revenue=Sum(self.revenue_expr()),
+            cost = Sum(self.cost_expr()),
+            profit = Sum(self.profit_expr()),
+            batches_sold = Count('id'),
+            units_sold = Sum(ExpressionWrapper(
+                F('quantity') - F('remaining_quantity'),
+                output_field=DecimalField(max_digits=20, decimal_places=2)
+            ))
+        ).order_by('-profit')
+
+        result = []
+        for r in rows:
+            cost = r['cost'] or Decimal('0')
+            profit = r['profit'] or Decimal('0')
+            margin = round((profit / cost) * 100, 1) if cost > 0 else 0
+
+            result.append({
+                'product_id': r['product__id'],
+                '': r['product__name'],
+                'category': r['product__category'],
+                'revenue': r['revenue'],
+                'cost': cost,
+                'profit': profit,
+                'margin': margin,
+                'batches_sold': r['batches_sold'],
+                'units_sold': r['units_sold']
+            })
+        return Response(result)
 
 
 class DashboardViewSet(viewsets.ViewSet):
