@@ -269,6 +269,35 @@ class ReportViewSet(viewsets.ViewSet):
             'total_pages': (total + page_size-1) // page_size
         })
     
+    def monthly(self, request):
+        user = request.user
+        year_ago = timezone.now() - timedelta(days=365)
+        rows = StockBatch.objects.filter(
+            product__user = user,
+            is_depleted = True,
+            depleted_at__gte = year_ago
+        ).annotate(
+            month = TruncMonth('depleted_at')
+        ).values('month').annotate(
+            revenue = Sum(self.revenue_expr()),
+            cost = Sum(self.cost_expr()),
+            profit = Sum(self.profit_expr()),
+        ).order_by('month')
+
+        result = []
+        for r in rows:
+            revenue = r['revenue'] or 0
+            cost = r['cost'] or 0
+            profit = r['profit'] or 0
+            result.append({
+                'month': r['month'].strftime('%b %Y'),
+                'month_key': r['month'].strftime('%Y-%m'),
+                'revenue': revenue,
+                'cost': cost,
+                'profit': profit,
+                'margin': round((profit / cost) * 100, 1) if cost > 0 else 0
+            })
+        return Response(result)
 
 class DashboardViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
