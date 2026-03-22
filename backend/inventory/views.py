@@ -219,7 +219,56 @@ class ReportViewSet(viewsets.ViewSet):
                 'units_sold': r['units_sold']
             })
         return Response(result)
+    
+    
+    @action(detail=False, methods=['get'])
+    def history(self, request):
+        user = request.user
+        qs = StockBatch.objects.filter(
+            product__user = user, is_depleted = True
+        ).select_related('product').order_by('-depleted_at')
+        
+        product_id = request.query_params.get('product')
+        if product_id:
+            qs = qs.filter(product__id = product_id)
 
+        page = int(request.query_params.get('page', 1))
+        page_size = int(request.query_params.get('page_size', 20))
+        total = qs.count()
+        batches = qs[(page - 1) * page_size : page * page_size]
+
+        data = []
+        for b in batches:
+            sold = b['quantity'] - b['remaining_quantity']
+            revenue = sold * b['sell_price_per_unit']
+            cost = sold * b['buy_price_per_unit']
+            profit = revenue - cost
+            margin = round((profit / cost) * 100, 1) if cost > 0 else 0
+            data.append({
+                'id': b.id,
+                'product': b.product.name,
+                'category': b.product.category,
+                'quantity': b.quantity,
+                'sold': sold,
+                'buy_price': b.buy_price_per_unit,
+                'sell_price': b.sell_price_per_unit,
+                'revenue': revenue,
+                'cost': cost,
+                'profit': profit,
+                'margin': margin,
+                'added_at': b.added_at.isoformat(),
+                'depleted_at': b.depleted_at.isoformat(),
+                'days_in_stock': b.days_in_stock,
+                'notes': b.notes
+            })
+        return Response({
+            'results': data,
+            'total': total,
+            'page': page,
+            'page_size': page_size,
+            'total_pages': (total + page_size-1) // page_size
+        })
+    
 
 class DashboardViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
