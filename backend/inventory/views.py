@@ -298,6 +298,108 @@ class ReportViewSet(viewsets.ViewSet):
                 'margin': round((profit / cost) * 100, 1) if cost > 0 else 0
             })
         return Response(result)
+    
+class InsightView(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+    def list(self, request):
+        user = request.user
+        products = Product.objects.filter(user = user, is_active=True).prefetch_related('batches')
+        depleted = StockBatch.objects.filter(product__user = user, is_depleted = True)
+
+        product_velocity = {}
+        product_turnover = {}
+        for b in depleted.select_related('products'):
+            delta = b.depleted_at - b.added_at
+            days = max(delta.days, 1)
+            sold = b.quantity - b.remaining_quantity
+            vel = sold / days
+            key = (b.product.id, b.product.name)
+            if key not in product_velocity:
+                product_velocity[key] = []
+                product_turnover[key] = []
+            product_velocity[key].append(vel)
+            product_turnover[key].append(days)
+
+        velocity_summary = []
+        for (pid, name), vels in product_velocity.items():
+            avg_vel = sum(vels) / len(vels)
+            avg_turn = sum(product_turnover[(pid, name)]) / len(product_turnover[(pid, name)])
+            velocity_summary.append({
+                'product_id': pid,
+                'product_name': name,
+                'avg_velocity': round(avg_vel),
+                'avg_turnover': round(avg_turn, 2),
+                'batches_counted': len(vels)
+            })
+            velocity_summary.sort(key=lambda x: x['avg_velocity'], reverse=True)
+
+            fast_movers = velocity_summary[:5]
+            slow_movers = list(reversed(velocity_summary[:-5])) if len(velocity_summary) > 5 else []
+
+        alerts = []
+        for product in products:
+            try:
+                if product.alert.is_active and product.alert.is_trigerred:
+                    stock = product.current_stock()
+                    threshold = product.alert.threshold_quantity
+                    alerts.append({
+                        'product_id': product.id,
+                        'product': product.name,
+                        'current_stock': stock,
+                        'threshold': threshold,
+                        'pct_remaining': round((stock / threshold) * 100 ) if threshold > 0 else 0,
+                    })
+            except LowStockAlert.DoesNotExist:
+                pass
+
+        month_ago = timezone.now() - timedelta(days=30)
+        active_b = StockBatch.objects.filter(
+            product__user = user,
+            remaining_quantity__gte = 0,
+            
+            is_depleted = False,
+        )
+
+        stale = active_b.filter(
+            added_at__lte = month_ago,
+        ).select_related('product')
+        
+        stale_stock = [{
+            'product_id': b.product.id,
+            'product': b.product.name,
+            'remaining': b.remaining_quantity,
+            'days_in_stock': b.days_in_stock,
+            'added_at': b.added_at.strftime('%d %b %Y')
+        } for b in stale]
+
+        profit_expr = ExpressionWrapper(
+            (F('quantity') - F('remaining_quantity')) * (F('sell_price_per_unit') - F('buy_price_per_unit')),
+            output_field=DecimalField(max_digits=20, decimal_places=2)
+        )
+
+        category_rows = depleted.values('product__category').annotate(
+            profit = Sum(profit_expr),
+            batches = Count('id')
+        ).order_by('-profit')
+
+        category = [{
+            'category': r['product__category'],
+            'profit': r['profit'] or 0,
+            'batches': r['batches']
+        } for r in category_rows]
+
+        return Response({
+            'fast_movers': fast_movers,
+            'slow_movers': slow_movers,
+            'low_stock_alerts': alerts,
+            'stale_stock': stale_stock,
+            'category_breakdown': category,
+            'total_products': products.count(),
+            'total_active_batches': active_b.count()
+        })
+
+
+
 
 class DashboardViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
