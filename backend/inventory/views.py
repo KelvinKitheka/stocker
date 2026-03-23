@@ -299,7 +299,7 @@ class ReportViewSet(viewsets.ViewSet):
             })
         return Response(result)
     
-class InsightView(viewsets.ViewSet):
+class InsightViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
     def list(self, request):
         user = request.user
@@ -339,7 +339,7 @@ class InsightView(viewsets.ViewSet):
         alerts = []
         for product in products:
             try:
-                if product.alert.is_active and product.alert.is_trigerred:
+                if product.alert.is_active and product.alert.is_triggered:
                     stock = product.current_stock()
                     threshold = product.alert.threshold_quantity
                     alerts.append({
@@ -397,7 +397,27 @@ class InsightView(viewsets.ViewSet):
             'total_products': products.count(),
             'total_active_batches': active_b.count()
         })
-
+    
+    @action(detail=False, methods=['get'])
+    def velocity(self, request):
+        user = request.user
+        products = Product.objects.filter(user=user, is_depleted=False)
+        result = []
+        for product in products:
+            stock = product.current_stock()
+            avg_vel = product.average_velocity
+            days_left = round(stock / avg_vel, 1) if avg_vel > 0 else None
+            result.append({
+                'product_id': product.id,
+                'product': product.name,
+                'category': product.category,
+                'current_stock': stock,
+                'avg_velocity': round(avg_vel, 2),
+                'days_until_empty': days_left,
+                'total_value': product.total_value
+            })
+        result.sort(key= lambda x: x['avg_velocity'], reverse=True)
+        return Response(result)
 
 
 
