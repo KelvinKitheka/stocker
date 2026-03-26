@@ -154,8 +154,8 @@ class ReportViewSet(viewsets.ViewSet):
             output_field=DecimalField(max_digits=20, decimal_places=2)
         )
     
-    def list(self):
-        user = self.request.user
+    def list(self, request):
+        user = request.user
         all_batches = StockBatch.objects.filter(product__user = user)
         depleted = all_batches.filter(is_depleted=True)
 
