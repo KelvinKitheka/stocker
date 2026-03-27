@@ -41,6 +41,7 @@ class ProductSerializer(serializers.ModelSerializer):
     
 class StockBatchSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name', read_only = True)
+    product_category = serializers.CharField(source='product.category', read_only = True)
     estimated_profit = serializers.SerializerMethodField()
     profit_margin = serializers.SerializerMethodField()
     days_in_stock = serializers.SerializerMethodField()
@@ -49,7 +50,7 @@ class StockBatchSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StockBatch
-        fields = ['id', 'product', 'product_name', 'quantity', 'remaining_quantity',
+        fields = ['id', 'product', 'product_category', 'product_name','quantity', 'remaining_quantity',
                 'buy_price_per_unit', 'sell_price_per_unit', 'added_at', 'depleted_at',
                 'is_depleted', 'notes', 'estimated_profit', 'profit_margin', 
                 'days_in_stock', 'velocity', 'total_buy_cost']
