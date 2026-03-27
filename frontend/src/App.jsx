@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import Login from "./pages/Login";
 import  Sidebar  from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
+import Stock from "./pages/Stock";
 
 
 function App() {
@@ -34,9 +35,20 @@ function App() {
               authenticated ? ( 
               <Dashboard /> 
             ) : (
-              < Navigate to="/login" replace />
+              <Navigate to="/login" replace />
             )
             }
+          />
+
+          <Route
+          path="/stock"
+          element={
+            authenticated ? (
+              <Stock/>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
           />
 
           <Route
