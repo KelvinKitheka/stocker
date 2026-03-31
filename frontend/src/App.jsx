@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import  Sidebar  from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import Stock from "./pages/Stock";
+import Reports from "./pages/Reports";
 
 
 function App() {
@@ -48,6 +49,18 @@ function App() {
             ) : (
               <Navigate to="/login" replace />
             )
+          }
+          />
+
+          <Route
+          path="/reports"
+          element = {
+            authenticated ? (
+              <Reports/>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+            
           }
           />
 
