@@ -137,7 +137,7 @@ class ReportViewSet(viewsets.ViewSet):
     
     def profit_expr(self):
         return ExpressionWrapper(
-            (F('quantity') - F('remaining_quantity')) * (F('buy_price_per_unit') - F('sell_price_per_unit')),
+            (F('quantity') - F('remaining_quantity')) * (F('sell_price_per_unit') - F('buy_price_per_unit')),
             output_field=DecimalField(max_digits=20, decimal_places=2)
         )
 
