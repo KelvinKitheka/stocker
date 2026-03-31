@@ -239,9 +239,9 @@ class ReportViewSet(viewsets.ViewSet):
 
         data = []
         for b in batches:
-            sold = b['quantity'] - b['remaining_quantity']
-            revenue = sold * b['sell_price_per_unit']
-            cost = sold * b['buy_price_per_unit']
+            sold = b.quantity - b.remaining_quantity
+            revenue = sold * b.sell_price_per_unit
+            cost = sold * b.buy_price_per_unit
             profit = revenue - cost
             margin = round((profit / cost) * 100, 1) if cost > 0 else 0
             data.append({
