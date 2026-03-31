@@ -269,6 +269,9 @@ class ReportViewSet(viewsets.ViewSet):
             'total_pages': (total + page_size-1) // page_size
         })
     
+
+
+    @action(detail=False, methods=['get'])
     def monthly(self, request):
         user = request.user
         year_ago = timezone.now() - timedelta(days=365)
