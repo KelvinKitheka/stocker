@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Package, BarChart3, TrendingUp, Settings, LogOut} from 'lucide-react';
+import { Home, Package, BarChart3, TrendingUp, LogOut} from 'lucide-react';
 import { logout } from '../services/api';
 
 const Sidebar = () => {
@@ -12,7 +12,7 @@ const Sidebar = () => {
         {path:'/stock', icon: Package, label: 'Stock'},
         {path: '/reports', icon: BarChart3, label:'Reports'},
         {path: '/insights', icon: TrendingUp, label:'Insights'},
-        {path: '/settings', icon: Settings, label: 'Settings'},
+    
     ];
 
     const handleLogout = () => {
@@ -21,7 +21,7 @@ const Sidebar = () => {
     };
 
     return (
-        <div className="w-64 bg-gray-100 min-h-screen flex flex-col">
+        <div className="w-64 bg-gray-100 min-h-screen flex flex-col fixed left-0 top-0">
             <div className="p-6">
                 <h2 className="text-xl font-bold text-gray-800">STOCKER</h2>
             </div>
