@@ -311,7 +311,7 @@ class InsightViewSet(viewsets.ViewSet):
 
         product_velocity = {}
         product_turnover = {}
-        for b in depleted.select_related('products'):
+        for b in depleted.select_related('product'):
             delta = b.depleted_at - b.added_at
             days = max(delta.days, 1)
             sold = b.quantity - b.remaining_quantity
@@ -404,7 +404,7 @@ class InsightViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def velocity(self, request):
         user = request.user
-        products = Product.objects.filter(user=user, is_depleted=False)
+        products = Product.objects.filter(user=user, is_active=True)
         result = []
         for product in products:
             stock = product.current_stock()
