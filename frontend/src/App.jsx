@@ -5,6 +5,7 @@ import  Sidebar  from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import Stock from "./pages/Stock";
 import Reports from "./pages/Reports";
+import Insights from "./pages/Insights";
 
 
 function App() {
@@ -61,6 +62,17 @@ function App() {
               <Navigate to="/login" replace />
             )
             
+          }
+          />
+
+          <Route
+          path="/insights"
+          element={
+            authenticated ? (
+              <Insights/>
+            ) : (
+              <Navigate to="/login" replace />
+            )
           }
           />
 
