@@ -334,10 +334,10 @@ class InsightViewSet(viewsets.ViewSet):
                 'avg_turnover': round(avg_turn, 2),
                 'batches_counted': len(vels)
             })
-            velocity_summary.sort(key=lambda x: x['avg_velocity'], reverse=True)
+        velocity_summary.sort(key=lambda x: x['avg_velocity'], reverse=True)
 
-            fast_movers = velocity_summary[:5]
-            slow_movers = list(reversed(velocity_summary[:-5])) if len(velocity_summary) > 5 else []
+        fast_movers = velocity_summary[:5]
+        slow_movers = reversed(velocity_summary[-5:])
 
         alerts = []
         for product in products:
@@ -350,7 +350,7 @@ class InsightViewSet(viewsets.ViewSet):
                         'product': product.name,
                         'current_stock': stock,
                         'threshold': threshold,
-                        'pct_remaining': round((stock / threshold) * 100 ) if threshold > 0 else 0,
+                        'pct_remaining': round((float(stock) / float(threshold)) * 100, 2) if threshold > 0 else 0,
                     })
             except LowStockAlert.DoesNotExist:
                 pass
@@ -409,7 +409,7 @@ class InsightViewSet(viewsets.ViewSet):
         for product in products:
             stock = product.current_stock()
             avg_vel = product.average_velocity
-            days_left = round(stock / avg_vel, 1) if avg_vel > 0 else None
+            days_left = round(float(stock) / avg_vel, 1) if avg_vel > 0 else None
             result.append({
                 'product_id': product.id,
                 'product': product.name,
