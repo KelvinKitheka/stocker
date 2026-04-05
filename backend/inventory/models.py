@@ -40,7 +40,7 @@ class Product(models.Model):
     
     @property
     def average_velocity(self):
-        batches = self.batches.filter(is_depleted = False)
+        batches = self.batches.filter(is_depleted = True)
         if not batches.exists():
             return 0
         velocities = [b.velocity for b in batches]
