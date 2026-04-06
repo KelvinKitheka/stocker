@@ -1,7 +1,8 @@
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
-from rest_framework import serializers
-
+from rest_framework import serializers, generics, permissions, status
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
 
 class RegisterSerializer(serializers.Serializer):
     username = serializers.CharField(max_length = 150)
@@ -42,3 +43,30 @@ class RegisterSerializer(serializers.Serializer):
         )
 
         return user
+
+
+class RegisterView(generics.GenericAPIView):
+    serializer_class = RegisterSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        serializer = self.get_serializer(data = request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = serializer.save()
+
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'first_name': user.first_name,
+                'email': user.email
+            }
+        }, status=status.HTTP_201_CREATED)
+
+
