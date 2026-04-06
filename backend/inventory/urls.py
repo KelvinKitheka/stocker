@@ -1,6 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import ProductViewset, DashboardViewSet, LowStockAlertViewSet, StockBatchViewset, ReportViewSet, InsightViewSet
+from .RegisterView import RegisterView
 
 router = DefaultRouter()
 router.register(r'products', ProductViewset, basename='product')
@@ -11,5 +12,6 @@ router.register(r'reports', ReportViewSet, basename='report')
 router.register(r'insights', InsightViewSet, basename='insight')
 
 urlpatterns = [
-    path('', include(router.urls))
+    path('', include(router.urls)),
+    path('register/', RegisterView.as_view(), name='register')
 ]
