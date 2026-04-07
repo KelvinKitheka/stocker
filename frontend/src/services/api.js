@@ -66,6 +66,22 @@ export const login = async (username, password) => {
     return response.data;
 };
 
+export const register = async ({username, email, first_name, password, confirm_password }) => {
+    const response = await axios.post(`${API_BASE_URL}/register/`, {
+        username,
+        email,
+        first_name,
+        password,
+        confirm_password
+    });
+
+    localStorage.setItem('access_token', response.data.access);
+    localStorage.setItem('refresh_token', response.data.refresh);
+
+    return response.data;
+
+}
+
 export const logout = () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
