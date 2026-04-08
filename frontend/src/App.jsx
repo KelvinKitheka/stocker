@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import Stock from "./pages/Stock";
 import Reports from "./pages/Reports";
 import Insights from "./pages/Insights";
+import Register from "./pages/Register";
 
 
 function App() {
@@ -18,6 +19,9 @@ function App() {
     setLoading(false);
 
   }, []);
+
+  const guestOnly = (element) => 
+    authenticated ? <Navigate to="/" replace /> : element;
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>
@@ -85,6 +89,11 @@ function App() {
                 <Login onLogin={() => setAuthenticated(true)}/>
               )
             }
+          />
+
+          <Route
+          path="/register"
+          element = {guestOnly(<Register onLogin={() => setAuthenticated(true)}/>)}
           />
           
         </Routes>
