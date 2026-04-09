@@ -24,7 +24,7 @@ class RegisterSerializer(serializers.Serializer):
     
     def validate(self, data):
         if data['password'] != data['confirm_password']:
-            raise serializers.ValidationError({"Confirm Passwords" : "Password do not match."})
+            raise serializers.ValidationError({"confirm_password" : "Password do not match."})
         
         try:
             validate_password(data['password'])
@@ -33,7 +33,7 @@ class RegisterSerializer(serializers.Serializer):
         return data
     
     def create(self, validated_data):
-        validated_data.pop("confirm password")
+        validated_data.pop("confirm_password")
         user = User.objects.create_user(
             username= validated_data['username'],
             email = validated_data['email'],

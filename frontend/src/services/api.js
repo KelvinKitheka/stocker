@@ -66,11 +66,12 @@ export const login = async (username, password) => {
     return response.data;
 };
 
-export const register = async ({username, email, first_name, password, confirm_password }) => {
+export const register = async ({username, email, first_name, last_name, password, confirm_password }) => {
     const response = await axios.post(`${API_BASE_URL}/register/`, {
         username,
         email,
         first_name,
+        last_name,
         password,
         confirm_password
     });
