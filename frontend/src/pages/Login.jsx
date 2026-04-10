@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Package } from 'lucide-react';
 import { login } from '../services/api';
 
@@ -59,6 +59,7 @@ const Login = ({ onLogin }) => {
                     name='username'
                     value={formData.username}
                     onChange={handleChange}
+                    autoComplete='username'
                     className='w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-transparent '
                     required
                     />
@@ -73,6 +74,7 @@ const Login = ({ onLogin }) => {
                     name='password'
                     value={formData.password}
                     onChange={handleChange}
+                    autoComplete='current-password'
                     className='w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-transparent '
                     required
                     />
@@ -88,9 +90,9 @@ const Login = ({ onLogin }) => {
                 </form>
                 <p className='text-center text-gray-600 mt-6 text-sm'>
                     Don't have an account?{' '}
-                    <a href='#' className='text-emerald-700 font-semibold hover:underline'>
+                    <Link to="/register" className='text-emerald-700 font-semibold hover:underline'>
                         Sign up
-                    </a>
+                    </Link>
                 </p>
             </div>
         </div>
