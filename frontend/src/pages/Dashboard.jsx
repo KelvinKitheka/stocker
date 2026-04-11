@@ -4,6 +4,7 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recha
 import api from "../services/api";
 import AddStockModal from "../components/AddStockModal";
 import DepletionModal from "../components/DepletionModal";
+import { Link } from "react-router-dom";
 
 const Dashboard = () => {
     const [ dashData, setDashData ] = useState(null);
@@ -59,7 +60,7 @@ const Dashboard = () => {
                     <div className="bg-white rounded-lg p-6 shadow">
                         <h3 className="text-sm text-gray-600 mb-2">Daily Profit</h3>
                         <p className="text-3xl font-bold text-gray-800">
-                            KSH {dashData?.daily_profit?.toLocaleString() || 0}
+                            KSH {Number(dashData?.daily_profit || 0).toLocaleString()}
                         </p>
                     </div>
 
@@ -147,7 +148,7 @@ const Dashboard = () => {
                                 <div className="bg-gray-100 rounded p-3 mt-4">
                                     <div className="text-sm text-gray-600">Income This Week</div>
                                     <div className="text-2xl font-bold">
-                                        KSH { dashData?.income_this_week?.toLocaleString() || 0}
+                                        KSH { Number(dashData?.income_this_week || 0).toLocaleString()}
                                     </div>
                                 </div>
                             </div>
@@ -159,12 +160,14 @@ const Dashboard = () => {
                                 {new Date().toLocaleDateString('en-US', {month: 'long', day: 'numeric'})} - {' '}
                                 {new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US',{month: 'long', day: 'numeric'})}
                             </p>
-                            <ResponsiveContainer>
-                                <BarChart>
-                                    <XAxis dataKey="day"/>
-                                    <YAxis/>
-                                    <Tooltip/>
-                                    <Bar dataKey={"profit"} fill="#10b981"/>
+                            <ResponsiveContainer width="100%" height={120}>
+                                <BarChart data={dashData?.weekly_summary || []}>
+                                    <XAxis dataKey="day" tick={{ fontSize:11 }}/>
+                                    <YAxis hide />
+                                    <Tooltip
+                                    formatter={(value) => [`KSH ${Number(value).toLocaleString()}`, 'Profit']}
+                                    />
+                                    <Bar dataKey={"profit"} fill="#10b981" radius={[3, 3, 0, 0]}/>
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -179,7 +182,7 @@ const Dashboard = () => {
                                     <div className="flex justify-between mb-1">
                                         <span className="text-gray-600">Total Profit</span>
                                         <span className="font-bold text-xl">
-                                            KSH {dashData?.total_profit_week?.toLocaleString() || 0}
+                                            KSH {Number(dashData?.total_profit_week || 0).toLocaleString()}
                                         </span>
                                     </div>
                                 </div>
@@ -226,13 +229,19 @@ const Dashboard = () => {
                                 <div>
                                     <h3 className="text-sm font-semibold mb-2">Profit Trend</h3>
                                     <ResponsiveContainer width="100%" height={100}>
-                                        <BarChart data={dashData?.weekly_summary?.slice(-7) || []}>
-                                            <Bar dataKey="profit" fill="#10b981"></Bar>
+                                        <BarChart data={(dashData?.weekly_summary || []).map(d => ({
+                                            ...d,
+                                        }))}>
+                                            <Tooltip
+                                            formatter={(value) => [`KSH ${value.toLocaleString()}`, 'Profit']}
+                                            />
+                                            <Bar dataKey="profit" fill="#10b981" radius={[3, 3, 0, 0]}/>
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
 
-                                <button className="w-full bg-emerald-700 text-white py-3 rounded-lg font-semibold hover:bg-emerald-800 transition">View Full Report</button>
+                                <Link to='/reports'
+                                className="w-full bg-emerald-700 text-white py-3 rounded-lg font-semibold hover:bg-emerald-800 transition block text-center">View Full Report</Link>
                             </div>
                         </div>
                     </div>
