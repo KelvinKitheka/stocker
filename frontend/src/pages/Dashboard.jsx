@@ -33,8 +33,8 @@ const Dashboard = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 ml-64">
-            <header className="bg-emerald-700 text-white p-4 flex items-center justify-between">
+        <div className="min-h-screen bg-gray-50 md:ml-64">
+            <header className="bg-emerald-700 text-white p-4 md:pl-4 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                 </div>
                 <div className="flex items-center gap-4">

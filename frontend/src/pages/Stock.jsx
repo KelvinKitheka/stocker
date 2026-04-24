@@ -119,8 +119,8 @@ const Stock = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 ml-64">
-            <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+        <div className="min-h-screen bg-gray-50 md:ml-64">
+            <header className="bg-white border-b border-gray-200 px-6 py-4 pl-14 md:pl-6 flex items-center justify-between sticky top-0 z-10">
                 <div>
                     <h1 className="text-xl font-bold text-gray-900">Stock</h1>
                     <p className="text-xs text-gray-500 mt-0.5">
