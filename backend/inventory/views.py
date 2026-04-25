@@ -443,12 +443,29 @@ class DashboardViewSet(viewsets.ViewSet):
             is_depleted = True
         )
 
-        # Daily profit from stock depleted today
-        daily_profit = depleted_qs.filter(
+        # Daily profit from fully depleted today
+        daily_profit_depleted = depleted_qs.filter(
             depleted_at__date = today
         ).aggregate(
             total = Sum(profit_expr)
         )['total'] or 0
+
+        # Profit from partial depleted batches today
+        partial_profit_expr = ExpressionWrapper(
+            F('quantity_used') * (F('batch__sell_price_per_unit') - F('batch__buy_price_per_unit')
+            ),
+            output_field = DecimalField(max_digits=20, decimal_places=2)
+        )
+
+        daily_profit_partial = PartialDepletion.objects.filter(
+            batch__product__user = user,
+            recorded_at__date = today,
+            batch__is_depleted = False
+        ).aggregate(
+            total=Sum(partial_profit_expr)
+        )['total'] or Decimal('0')
+
+        daily_profit = daily_profit_depleted + daily_profit_partial
 
         # Stock depleted count today
         depleted_count = depleted_qs.filter(
