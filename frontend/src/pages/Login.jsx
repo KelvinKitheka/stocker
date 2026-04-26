@@ -94,6 +94,13 @@ const Login = ({ onLogin }) => {
                         Sign up
                     </Link>
                 </p>
+                <button
+                type='button'
+                onClick={() => setFormData({'username': 'demo', 'password': 'Demo1234'})}
+                className='w-full border border-emerald-700 text-emerald-700 py-3 rounded-lg font-semibold hover:bg-emerald-50 transition mt-2'
+                >
+                    Try Demo
+                </button>
             </div>
         </div>
     );
