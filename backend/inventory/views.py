@@ -468,11 +468,16 @@ class DashboardViewSet(viewsets.ViewSet):
         daily_profit = daily_profit_depleted + daily_profit_partial
 
         # Stock depleted count today
+        partial_qs = PartialDepletion.objects.filter(
+            batch__product__user = user,
+            batch__is_depleted = False
+        ) 
+
         depleted_count = depleted_qs.filter(
             depleted_at__date = today
+        ).count() + partial_qs.filter(
+            recorded_at__date = today
         ).count()
-
-        
 
 
         # Low stock alerts
@@ -490,12 +495,26 @@ class DashboardViewSet(viewsets.ViewSet):
                 pass
 
         # Weekly income
-        weekly_income = depleted_qs.filter(
+        partial_revenue_expr = ExpressionWrapper(
+            F('quantity_used') * F('batch__sell_price_per_unit'),
+            output_field=DecimalField(max_digits=10, decimal_places=2)
+        )
+
+        revenue_expr = ExpressionWrapper(
+            (F('quantity') - F('remaining_quantity')) * F('sell_price_per_unit'),
+            output_field=DecimalField(max_digits=20, decimal_places=2)
+        )
+        
+        weekly_income = (depleted_qs.filter(
             depleted_at__date__gte = week_ago
         ).aggregate(
-            total = Sum(F('quantity') * F('sell_price_per_unit'))
-        )['total'] or 0
-
+            total = Sum(revenue_expr)
+        )['total'] or Decimal('0')
+        ) + ( 
+            partial_qs.filter(recorded_at__gte = week_ago)
+            .aggregate(total = Sum(partial_revenue_expr))['total'] or Decimal('0')
+        )
+ 
         # Weekly profit
         weekly_profit = depleted_qs.filter(
             depleted_at__date__gte = week_ago
