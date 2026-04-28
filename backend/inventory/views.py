@@ -519,8 +519,12 @@ class DashboardViewSet(viewsets.ViewSet):
         weekly_profit = depleted_qs.filter(
             depleted_at__date__gte = week_ago
         ).aggregate(
-            total = Sum(profit_expr)
-            )['total'] or 0
+            total = Sum(profit_expr) 
+            )['total'] or Decimal('0') + (
+                partial_qs.filter(
+                    recorded_at__gte=week_ago
+                ).aggregate(total = Sum(partial_profit_expr))
+            )['total'] or Decimal('0')
         
 
         # weekly summary
@@ -533,6 +537,19 @@ class DashboardViewSet(viewsets.ViewSet):
         ).order_by('day')
 
         profit_by_day ={row['day']: row['profit'] for row in daily_rows}
+
+        partial_daily_rows = partial_qs.filter(
+            recorded_at__date__gte = week_ago
+        ).annotate(
+            day = TruncDate('recorded_at')
+        ).values('day').annotate(
+            profit=Sum(partial_profit_expr)
+        )
+
+        for row in partial_daily_rows:
+            profit_by_day[row['day']] = (
+                profit_by_day.get(row['day'], Decimal('0')) + row['profit']
+            )
         weekly_data = []
         for i in range(7):
             day = week_ago + timedelta(days=i)
