@@ -66,7 +66,7 @@ const AddStockModal = ({ onClose, onSuccess}) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg w-full max-w-md mx-4">
-        <div className="bg-emerald-700 text-white p-4 rounded-t-lg flex items-center justify-center">
+        <div className="bg-emerald-700 text-white p-4 rounded-t-lg flex items-center justify-between">
             <div className="flex items-center gap-2">
                 <h2 className="text-xl font-semibold">Add new stock</h2>
             </div>
@@ -160,12 +160,12 @@ const AddStockModal = ({ onClose, onSuccess}) => {
                 required
                 min="0"
                 step="1"
-                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 mb-4 focus:ring-emerald-500 focus:border-transparent"
                 />
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Buy Price:
+                        Buy Price(per pack)
                     </label>
                 <div className="relative">
                     <span className="absolute left-3 top-3 text-gray-500">KSH</span>
@@ -174,7 +174,7 @@ const AddStockModal = ({ onClose, onSuccess}) => {
                     name="buyPrice"
                     value={formData.buyPrice}
                     onChange={handlechange}
-                    placeholder="1,000"
+                    placeholder="100"
                     required
                     min="0"
                     step="1"
@@ -194,7 +194,7 @@ const AddStockModal = ({ onClose, onSuccess}) => {
                     name="sellPrice"
                     value={formData.sellPrice}
                     onChange={handlechange}
-                    placeholder="100"
+                    placeholder="200"
                     required
                     min="0"
                     step="1"
