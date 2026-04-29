@@ -475,8 +475,6 @@ class DashboardViewSet(viewsets.ViewSet):
 
         depleted_count = depleted_qs.filter(
             depleted_at__date = today
-        ).count() + partial_qs.filter(
-            recorded_at__date = today
         ).count()
 
 
