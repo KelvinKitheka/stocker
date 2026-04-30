@@ -1,10 +1,11 @@
-import { Package, AlertTriangle, Plus } from "lucide-react";
+import { Package, AlertTriangle, Plus, LogOut } from "lucide-react";
 import React, { useState, useEffect} from "react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 import api from "../services/api";
 import AddStockModal from "../components/AddStockModal";
 import DepletionModal from "../components/DepletionModal";
 import { Link } from "react-router-dom";
+import { logout } from "../services/api";
 
 const Dashboard = () => {
     const [ dashData, setDashData ] = useState(null);
@@ -12,6 +13,7 @@ const Dashboard = () => {
     const [ showDepletion, setShowDepletion ] = useState(false);
     const [ selectedBatch, setSelectedBatch ] = useState(null);
     const [ loading, setLoading ] = useState(true);
+    const [ showUserMenu, setShowUserMenu ] = useState(false);
 
     useEffect(() => {
         fetchDashboard();
@@ -32,6 +34,11 @@ const Dashboard = () => {
         return <div className="flex items-center justify-center h-screen">Loading...</div>
     }
 
+    const handleLogout = () => {
+        logout();
+        window.location.href = '/login';
+    }
+
     return (
         <div className="min-h-screen bg-gray-50 md:ml-64">
             <header className="bg-emerald-700 text-white p-4 md:pl-4 flex items-center justify-between">
@@ -46,8 +53,46 @@ const Dashboard = () => {
                             </span>
                     )}
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center">
-                        {(dashData?.user?.first_name[0] || dashData?.user?.username[0] || 'U').charAt(0).toUpperCase()}
+                    <div className="relative">
+                        <button
+                        onClick={() => setShowUserMenu(!showUserMenu)}
+                        className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center hover:bg-emerald-500 transition cursor-pointer"
+                        >
+                            {(dashData?.user?.first_name?.[0] || dashData?.user?.username?.[0] || 'U').toUpperCase()}
+                        </button>
+                        { showUserMenu && (
+                            <>
+                            <div
+                                className="fixed inset-0 z-10"
+                                onClick={() => setShowUserMenu(false)}
+                            />
+
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 z-20">
+                                <div className="px-4 py-3 border-b border-gray-100">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white text-sm font-semibold">
+                                            {(dashData?.user?.first_name?.[0] || dashData?.user?.username?.[0] || 'U').toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-900">
+                                                {dashData?.user?.first_name || dashData?.user?.username}
+                                            </p>
+                                            <p className="text-xs text-gray-400">
+                                                {dashData?.user?.username}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button
+                                onClick={handleLogout}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition rounded-b-lg"
+                                >
+                                    <LogOut className="w-4 h-4"/>
+                                    Sign out
+                                </button>
+                            </div>
+                            </>
+                        )}
                     </div>
                 </div>
             </header>
@@ -136,10 +181,10 @@ const Dashboard = () => {
                                     <span className="text-gray-600">Slow Movers</span>
                                     <div className="text-right">
                                         <div className="font-semibold">
-                                            {dashData?.slow_movers?.[0]?.product || 'N/A'}
+                                            {dashData?.slow_movers?.at(-1)?.product || 'N/A'}
                                         </div>
                                         <div className="text-sm text-red-600">
-                                            {dashData?.slow_movers?.[0]?.velocity?.toFixed(1) || 0} units/days
+                                            {dashData?.slow_movers?.at(-1)?.velocity?.toFixed(1) || 0} units/days
                                         </div>
                                     </div>
                                 </div>
@@ -206,7 +251,7 @@ const Dashboard = () => {
                                     <h3  className="text-sm font-semibold mb-2">Slow Sellers</h3>
                                     <div className="flex flex-wrap gap-2">
                                         {dashData?.slow_movers?.length > 0 ? (
-                                            dashData.slow_movers.map((item, idx) => (
+                                            [...dashData.slow_movers].reverse().map((item, idx) => (
                                                 <div key={idx} className="w-10 h-10 bg-orange-100 rounded flex items-center justify-center text-xs font-bold text-orange-700" title={item.product}>
                                                 {item.product?.charAt(0).toUpperCase()}
                                                 </div>
