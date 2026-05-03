@@ -42,6 +42,11 @@ const Sidebar = () => {
         md:translate-x-0
         `}>
             <div className="p-6 flex items-center justify-between">
+                 <img
+                    src="/stocker.png"
+                    alt="Stocker"
+                    className="w-8 h-8 object-contain"
+                />
                 <h2 className="text-xl font-bold text-gray-800">STOCKER</h2>
             </div>
 

@@ -36,3 +36,6 @@ build/
 
 # Test coverage
 coverage/
+
+.vercel/
+.vercel
