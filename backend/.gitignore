@@ -20,3 +20,5 @@ stock/
 .vscode/
 .idea/
 *.swp
+
+/railway

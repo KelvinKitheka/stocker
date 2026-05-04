@@ -1,10 +1,12 @@
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+import dj_database_url
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-load_dotenv(os.path.join(BASE_DIR, '.env'))
+#load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -68,15 +70,11 @@ WSGI_APPLICATION = 'stocker.wsgi.application'
 
 # Database
 DATABASES = {
-    'default': {
-        'ENGINE': os.getenv("DB_ENGINE", "django.db.backends.postgresql"),
-        'NAME': os.getenv("DB_NAME"),
-        'USER': os.getenv("DB_USER", ""),
-        'PASSWORD': os.getenv("DB_PASSWORD", ""),
-        'HOST': os.getenv("DB_HOST", ""),
-        'PORT': os.getenv("DB_PORT", ""),
-        
-    }
+    'default': dj_database_url.parse(
+        os.getenv("DATABASE_URL"), 
+        conn_max_age = 600,
+        ssl_require = True
+    )
 }
 
 
@@ -110,6 +108,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR/ "staticfiles"
 
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
