@@ -41,7 +41,7 @@ const Sidebar = () => {
         ${open ? 'translate-x-0' : '-translate-x-full'}
         md:translate-x-0
         `}>
-            <div className="p-6 flex items-center justify-between">
+            <div className="p-6 flex items-center justify-left gap-2">
                  <img
                     src="/stocker.png"
                     alt="Stocker"
