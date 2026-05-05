@@ -8,6 +8,7 @@ const DepletionModal = ({ batch, onClose, onSuccess }) => {
     const [ batches, setBatches ] = useState([]);
     const [ selectedBatch, setSelectedBatch ] = useState(null);
     const [ selectedBatchId, setSelectedBatchId ] = useState('');
+    const [ submitting, setsubmitting ] = useState(false);
 
     useEffect(() => {
         fetchBatches();
@@ -30,6 +31,8 @@ const DepletionModal = ({ batch, onClose, onSuccess }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if(submitting) return;
+        setsubmitting(true);
 
         try {
             await api.post(`/products/${selectedBatch.product__id}/deplete/`, {
@@ -41,6 +44,7 @@ const DepletionModal = ({ batch, onClose, onSuccess }) => {
         } catch (error) {
             console.error('Error marking depletion:', error);
             alert('Failed to mark stock as depleted. Please try again')
+            setsubmitting(false);
         }
     };
 
@@ -151,7 +155,7 @@ const DepletionModal = ({ batch, onClose, onSuccess }) => {
                     type="submit"
                     className="w-full bg-orange-500 text-white p-3 rounded-lg font-semibold hover:bg-orange-600 transition"
                     >
-                        Confirm
+                        {submitting ? 'Confirming...' : 'Confirm'}
                     </button>
                 </form>
             </div>
