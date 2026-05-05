@@ -1,4 +1,4 @@
-import { Package, AlertTriangle, Plus, LogOut } from "lucide-react";
+import { Package, AlertTriangle, Plus, LogOut, User } from "lucide-react";
 import React, { useState, useEffect} from "react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 import api from "../services/api";
@@ -58,7 +58,7 @@ const Dashboard = () => {
                         onClick={() => setShowUserMenu(!showUserMenu)}
                         className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center hover:bg-emerald-500 transition cursor-pointer"
                         >
-                            {(dashData?.user?.first_name?.[0] || dashData?.user?.username?.[0] || 'U').toUpperCase()}
+                            <User/>
                         </button>
                         { showUserMenu && (
                             <>
