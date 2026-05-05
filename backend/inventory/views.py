@@ -209,7 +209,7 @@ class ReportViewSet(viewsets.ViewSet):
 
             result.append({
                 'product_id': r['product__id'],
-                '': r['product__name'],
+                'product': r['product__name'],
                 'category': r['product__category'],
                 'revenue': r['revenue'],
                 'cost': cost,
