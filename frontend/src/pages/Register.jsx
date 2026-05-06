@@ -122,8 +122,12 @@ const Register = ({ onLogin }) => {
     return (
         <div className="min-h-screen bg-emerald-600 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-8">
-                <div className="flex items-start justify-center mb-6">
-                    <Package className="w-10 h-10 text-emerald-700"/>
+                <div className="flex items-center justify-center mb-6">
+                <img
+                    src="/stocker.png"
+                    alt="Stocker"
+                    className="w-8 h-8 object-contain rounded-xl"
+                />
                     <h1 className="text-3xl font-bold text-gray-800 ml-3">STOCKER</h1>
                 </div>
 

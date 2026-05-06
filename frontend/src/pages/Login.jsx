@@ -20,7 +20,7 @@ const Login = ({ onLogin }) => {
 
         try {
             const data = await login(formData.username, formData.password);
-            onLogin({username: formData.username, first_name: data.user.first_name});
+            onLogin({username: formData.username, first_name: ''});
             navigate('/', { replace:true });
         } catch (err) {
             setError('Invalid username or password');
@@ -39,7 +39,11 @@ const Login = ({ onLogin }) => {
         <div className='min-h-screen bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center p-4'>
             <div className='bg-white rounded-lg shadow-xl w-full max-w-md p-8'>
                 <div className='flex items-center justify-center mb-8'>
-                    <Package className='w-12 h-12 text-emerald-700'/>
+                <img
+                    src="/stocker.png"
+                    alt="Stocker"
+                    className="w-8 h-8 object-contain rounded-xl"
+                />
                     <h1 className='text-3xl font-bold text-gray-800 ml-3'>STOCKER</h1>
                 </div>
                 <h2 className='text-3xl font-bold text-gray-800 mb-6 text-center'>
