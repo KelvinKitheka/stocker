@@ -11,6 +11,7 @@ import Register from "./pages/Register";
 
 function App() {
   const [ authenticated, setAuthenticated ] = useState(false);
+  const [ currentUSer, setCurrentUser] = useState(null);
   const [ loading, setLoading ] = useState(true);
 
   useEffect(() => {
@@ -22,6 +23,11 @@ function App() {
 
   const guestOnly = (element) => 
     authenticated ? <Navigate to="/" replace /> : element;
+
+  const handleLogin = (userData = null) => {
+    setAuthenticated(true);
+    if (userData) setCurrentUser(userData);
+  }
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>
@@ -39,7 +45,7 @@ function App() {
             path="/"
             element={
               authenticated ? ( 
-              <Dashboard /> 
+              <Dashboard currentUser={currentUSer}/> 
             ) : (
               <Navigate to="/login" replace />
             )
@@ -86,14 +92,15 @@ function App() {
               authenticated ? (
                 <Navigate to="/" replace />
               ) : (
-                <Login onLogin={() => setAuthenticated(true)}/>
+                <Login onLogin={handleLogin}/>
               )
             }
           />
 
           <Route
           path="/register"
-          element = {guestOnly(<Register onLogin={() => setAuthenticated(true)}/>)}
+          element = {guestOnly(<Register onLogin={handleLogin}/>
+          )}
           />
           
         </Routes>

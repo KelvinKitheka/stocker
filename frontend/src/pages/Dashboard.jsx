@@ -7,8 +7,8 @@ import DepletionModal from "../components/DepletionModal";
 import { Link } from "react-router-dom";
 import { logout } from "../services/api";
 
-const Dashboard = () => {
-    const [ dashData, setDashData ] = useState(null);
+const Dashboard = ({currentUser}) => {
+    const [ dashData, setDashData ] = useState(currentUser ? { user: currentUser } : null );
     const [ showAddStock, setShowAddStock ] = useState(false);
     const [ showDepletion, setShowDepletion ] = useState(false);
     const [ selectedBatch, setSelectedBatch ] = useState(null);

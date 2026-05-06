@@ -19,8 +19,8 @@ const Login = ({ onLogin }) => {
         setLoading(true);
 
         try {
-            await login(formData.username, formData.password);
-            onLogin();
+            const data = await login(formData.username, formData.password);
+            onLogin({username: formData.username, first_name: data.user.first_name});
             navigate('/', { replace:true });
         } catch (err) {
             setError('Invalid username or password');

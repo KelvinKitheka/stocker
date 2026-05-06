@@ -107,9 +107,8 @@ const Register = ({ onLogin }) => {
 
         setLoading(true);
         try {
-            console.log(formData)
-            await register(formData);
-            onLogin();
+            const data = await register(formData);
+            onLogin({username: data.user.username, first_name: data.user.first_name});
             navigate('/', { replace: true });
         } catch (err) {
             const data = err.response?.data;
