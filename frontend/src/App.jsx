@@ -7,6 +7,7 @@ import Stock from "./pages/Stock";
 import Reports from "./pages/Reports";
 import Insights from "./pages/Insights";
 import Register from "./pages/Register";
+import NotFound from "./pages/NotFound";
 
 
 function App() {
@@ -101,6 +102,11 @@ function App() {
           path="/register"
           element = {guestOnly(<Register onLogin={handleLogin}/>
           )}
+          />
+
+          <Route
+          path="*"
+          element = { authenticated ? <NotFound/> : <Navigate to="/login" replace />}
           />
           
         </Routes>
