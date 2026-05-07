@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid, Legend } from "recharts";
 import { TrendingUp, DollarSign, ShoppingBag, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import api from "../services/api";
+import PageLoader from "../components/PageLoader";
 
 const fmt = (n) => Number(n || 0).toLocaleString();
 
@@ -96,12 +97,7 @@ useEffect(() => {
 
 if (loading) {
     return (
-        <div className="flex items-center justify-center h-screen bg-gray-50">
-            <div className="flex flex-col items-center gap-3">
-                <div className="w-8 h-8 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin"/>
-                <p className="text-sm text-gray-500">Loading reports...</p>
-            </div>
-        </div>
+        <PageLoader message="Loading reports..."/>
     )
 }
 

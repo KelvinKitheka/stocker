@@ -6,6 +6,7 @@ import AddStockModal from "../components/AddStockModal";
 import DepletionModal from "../components/DepletionModal";
 import { Link } from "react-router-dom";
 import { logout } from "../services/api";
+import PageLoader from "../components/PageLoader";
 
 const Dashboard = ({currentUser}) => {
     const [ dashData, setDashData ] = useState(currentUser ? { user: currentUser } : null );
@@ -31,7 +32,7 @@ const Dashboard = ({currentUser}) => {
     };
 
     if (loading) {
-        return <div className="flex items-center justify-center h-screen">Loading...</div>
+        return <PageLoader message="Loading Dashboard..."/>
     }
 
     const handleLogout = () => {

@@ -3,6 +3,7 @@ import { Plus, Search, Filter, Package, TrendingDown, CheckCircle, Clock, Chevro
 import api from "../services/api";
 import AddStockModal from "../components/AddStockModal";
 import DepletionModal from "../components/DepletionModal";
+import PageLoader from "../components/PageLoader";
 
 const CATEGORY_COLORS = {
     food:"bg-emerald-100 text-emerald-800",
@@ -109,12 +110,7 @@ const Stock = () => {
 
     if(loading) {
         return (
-            <div className="flex items-center justify-center h-screen bg-gray-50">
-                <div className="flex flex-col items-center gap-3">
-                    <div className="w-8 h-8 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin"/>
-                        <p className="text-sm text-gray-500">Loading stock...</p>
-                </div>
-            </div>
+         <PageLoader message="Loading stock..."/>
         )
     }
 
