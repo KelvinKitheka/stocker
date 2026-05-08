@@ -1,5 +1,5 @@
-import { useState ,useEffect, useCallback } from "react";
-import { Plus, Search, Filter, Package, TrendingDown, CheckCircle, Clock, ChevronDown } from 'lucide-react';
+import { useState ,useEffect } from "react";
+import { Plus, Search, Package, TrendingDown, CheckCircle, Clock, ChevronDown } from 'lucide-react';
 import api from "../services/api";
 import AddStockModal from "../components/AddStockModal";
 import DepletionModal from "../components/DepletionModal";
@@ -49,6 +49,7 @@ const Stock = () => {
     const [batches, setBatches] = useState([]);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [batchLoading, setBatchLoading] = useState(false);
     const [search, setSearch] = useState("");
     const [filterProduct, setFilterProduct] = useState("");
     const [filterStatus, setFilterStatus] = useState("all");
@@ -59,34 +60,61 @@ const Stock = () => {
     const [stats, setStats] = useState(null);
 
 
-    const fetchAll = useCallback(async () => {
-        setLoading(true);
+    useEffect(() => {
+    const fetchStatic = async () => {
         try {
-            const params = {}
+            const [ productRes, reportsRes ] = await Promise.all([
+                api.get("/products/"),
+                api.get("/reports/")
+            ]) 
+            setProducts(productRes.data.results || productRes.data );
+            setStats(reportsRes.data);
+        } catch (err) {
+            console.error("Error fetching data", err)
+        } finally {
+            setLoading(false);
+        } 
+    };
+    fetchStatic();
+    }, []);
+
+    useEffect(() => {
+        const fetchBatches = async () => {
+            setBatchLoading(true);
+            try {
+                const params = {};
+                if (filterProduct) params.product = filterProduct;
+                if (filterStatus === "active") params.is_depleted = "false";
+                if (filterStatus === "depleted") params.is_depleted = "true";
+
+                const res = await api.get("/batches/", { params });
+                setBatches(res.data.results || res.data)
+
+                } catch (err) {
+                    console.error("Error fetching batches", err);
+                } finally {
+                    setBatchLoading(false)
+                }
+            };
+            fetchBatches();
+    }, [filterProduct, filterStatus]);
+
+    const refreshBatch = async () => {
+        setBatchLoading(true);
+        try {
+            const params = {};
             if (filterProduct) params.product = filterProduct;
             if (filterStatus === "active") params.is_depleted = "false";
             if (filterStatus === "depleted") params.is_depleted = "true";
 
-
-        const [batchRes, productRes, reportRes] = await Promise.all([
-            api.get("/batches/", {params}),
-            api.get("/products/"),
-            api.get("/reports/"),
-        ]);
-
-        setBatches(batchRes.data.results || batchRes.data);
-        setProducts(productRes.data.results || productRes.data);
-        setStats(reportRes.data)
-    } catch (error) {
-        console.error("Error fetching stock", error);
-    } finally {
-        setLoading(false);
+            const res = await api.get("/batches/", {params});
+            setBatches(res.data.results || res.data);
+        } catch (err) {
+            console.error("Error refreshing batches", err);
+        } finally {
+            setBatchLoading(false);
+        }
     }
-    }, [ filterProduct, filterStatus]);
-
-    useEffect(() => {
-    fetchAll(); 
-    }, [fetchAll]);
 
     const filtered = batches
     .filter((b) => {
@@ -247,7 +275,7 @@ const Stock = () => {
                         >
                             <option value="added_at_desc">Newest first</option>
                             <option value="added_at_asc">Oldest first</option>
-                            <option value="profit_desc">Highest first</option>
+                            <option value="profit_desc">Highest profit</option>
                             <option value="quantity_desc">Most Quantity</option>
                         </select>
                         <ChevronDown className="absolute right-2 top-2.5 w-4 h-4 text-gray-400 pointer-events-none"/>
@@ -269,14 +297,14 @@ const Stock = () => {
                             <thead>
                                 <tr className="border-b border-gray bg-gray-50">
                                     <Th align="left">Product</Th>
-                                    <Th>Qty</Th>
-                                    <Th>Remaining</Th>
-                                    <Th>Buy Price</Th>
-                                    <Th>Sell Price</Th>
-                                    <Th>Profit</Th>
-                                    <Th>Margin</Th>
+                                    <Th align="right">Qty</Th>
+                                    <Th align="right">Remaining</Th>
+                                    <Th align="right">Buy Price</Th>
+                                    <Th align="right">Sell Price</Th>
+                                    <Th align="right">Profit</Th>
+                                    <Th align="right">Margin</Th>
                                     <Th align="center">Status</Th>
-                                    <Th>Added</Th>
+                                    <Th align="right">Added</Th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
@@ -355,7 +383,7 @@ const Stock = () => {
             onClose={() => {setShowAddStock(false)}}
             onSuccess={() => {
                 setShowAddStock(false);
-                fetchAll();
+                refreshBatch();
             }}
             />
         )}
@@ -366,7 +394,7 @@ const Stock = () => {
             onClose={() => setShowDepletion(false)}
             onSuccess={() => {
                 setShowDepletion(false);
-                fetchAll();
+                refreshBatch();
             }}
             />
         )}
