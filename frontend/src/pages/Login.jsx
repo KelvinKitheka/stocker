@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Package } from 'lucide-react';
+import { Package, Eye, EyeOff } from 'lucide-react';
 import { login } from '../services/api';
 
 const Login = ({ onLogin }) => {
@@ -12,6 +12,7 @@ const Login = ({ onLogin }) => {
 
     const [ error, setError ] = useState('');
     const [ loading, setLoading ] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -73,8 +74,9 @@ const Login = ({ onLogin }) => {
                     <label className='block text-sm font-medium text-gray-700 mb-2'>
                         Password
                         </label>
+                    <div className='relative'> 
                     <input
-                    type='password'
+                    type={ showPassword ? 'text' : 'password'}
                     name='password'
                     value={formData.password}
                     onChange={handleChange}
@@ -82,6 +84,15 @@ const Login = ({ onLogin }) => {
                     className='w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-transparent '
                     required
                     />
+                    <button
+                    type='button'
+                    onClick={() => {setShowPassword(s => !s)}}
+                    tabIndex={-1}
+                    className='absolute right-3 top-3.5 text-gray-400 hover:text-gray-600'
+                    >
+                        {showPassword ? <EyeOff className='w-4 h-4'/> : <Eye className='w-4 h-4'/>}
+                    </button>
+                    </div>
                     </div>
 
                     <button
