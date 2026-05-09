@@ -73,7 +73,7 @@ class StockBatchViewset(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        qs = StockBatch.objects.filter(product__user = self.request.user)
+        qs = StockBatch.objects.filter(product__user = self.request.user).select_related('product')
         product_id = self.request.query_params.get('product')
         is_depleted = self.request.query_params.get('is_depleted')
         if product_id:
