@@ -25,18 +25,31 @@ class ProductSerializer(serializers.ModelSerializer):
         return value
 
     def get_current_stock(self, obj):
+        if hasattr(obj, 'stock_sum'):
+            return float(obj.stock_sum or 0)
         return float(obj.current_stock())
     
     def get_total_value(self, obj):
+        if hasattr(obj, 'stock_value'):
+            return float(obj.stock_value or 0)
         return float(obj.total_value)
     
     def get_has_alert(self, obj):
+        if hasattr(obj, 'alert_threshold') and obj.alert_threshold is not None:
+            stock = obj.stock_sum or 0
+            return bool(obj.alert_active and stock <= obj.alert_threshold )
         try:
             return obj.alert.is_triggered if obj.alert.is_active else False
         except LowStockAlert.DoesNotExist:
             return False
         
     def get_average_velocity(self, obj):
+        if hasattr(obj, 'depleted_batches'):
+            batches = obj.depleted_batches
+            if not batches:
+                return 0
+            velocities = [b.velocity for b in batches]
+            return sum(velocities) / len(velocities)
         return obj.average_velocity
     
 class StockBatchSerializer(serializers.ModelSerializer):

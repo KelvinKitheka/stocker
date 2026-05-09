@@ -3,7 +3,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum, Q, Avg, F, Count, ExpressionWrapper, DecimalField
+from django.db.models import Sum, Q, Prefetch, F, Count, ExpressionWrapper, DecimalField
 from django.utils import timezone
 from datetime import timedelta
 from .models import Product, StockBatch, PartialDepletion, LowStockAlert
@@ -20,7 +20,28 @@ class ProductViewset(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Product.objects.filter(user=self.request.user, is_active=True)
+        return Product.objects.filter(user=self.request.user, is_active=True).annotate(
+            stock_sum = Sum(
+                'batches__remaining_quantity',
+                filter=Q(batches__is_depleted=False)
+            ), 
+
+            stock_value = Sum(
+                ExpressionWrapper(
+                    F('batches__remaining_quantity') * F('batches__buy_price_per_unit'),
+                    output_field=DecimalField(max_digits=20, decimal_places=2)
+                ),
+                filter=Q(batches__is_depleted = False)
+            ),
+            alert_threshold = F('alert__threshold_quantity'),
+            alert_active = F('alert__is_active'),
+        ).prefetch_related(
+            Prefetch(
+                'batches',
+                queryset = StockBatch.objects.filter(is_depleted=True),
+                to_attr = 'depleted_batches'
+            )
+        )
     
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
