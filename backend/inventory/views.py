@@ -3,11 +3,11 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum, Q, Prefetch, F, Count, ExpressionWrapper, DecimalField, Avg, FloatField
+from django.db.models import Sum, Q, Prefetch, F, Count, ExpressionWrapper, DecimalField, Avg, FloatField, Value
 from django.utils import timezone
 from datetime import timedelta
 from .models import Product, StockBatch, PartialDepletion, LowStockAlert
-from django.db.models.functions import TruncDate, TruncMonth, Greatest, Extract
+from django.db.models.functions import TruncDate, TruncMonth, Greatest, Extract, Coalesce
 from decimal import Decimal
 from .serializers import (
     ProductSerializer, StockBatchSerializer, PartialDepletionSerializer,
@@ -554,18 +554,32 @@ class DashboardViewSet(viewsets.ViewSet):
 
 
         # Low stock alerts
-        alerts = []
-        products = Product.objects.filter(user = user, is_active = True)
-        for product in products:
-            try:
-                if product.alert.is_active and product.alert.is_triggered:
-                    alerts.append({
-                        'product': product.name,
-                        'remaining': float(product.current_stock()),
-                        'threshold': float(product.alert.threshold_quantity)
-                    })
-            except LowStockAlert.DoesNotExist:
-                pass
+        alerted = Product.objects.filter(
+            user=user,
+            is_active=True,
+            alert__is_active=True
+        ).annotate(
+            current_stock_sum=Coalesce(
+                Sum(
+                    'batches__remaining_quantity',
+                    filter=Q(batches__is_depleted=False)
+                ),
+                Decimal('0'),
+                output_field=DecimalField(max_digits=20, decimal_places=2)
+            )
+        ).filter(
+            current_stock_sum__lte=F('alert__threshold_quantity')
+        ).values(
+            'name',
+            'alert__threshold_quantity',
+            'current_stock_sum'
+        )
+
+        alerts = [{
+            'product': p['name'],
+            'remaining': float(p['current_stock_sum'] or 0),
+            'threshold': float(p['alert__threshold_quantity'])
+        } for p in alerted]
 
         # Weekly income
         partial_revenue_expr = ExpressionWrapper(
@@ -631,46 +645,52 @@ class DashboardViewSet(viewsets.ViewSet):
                 'profit': profit_by_day.get(day, Decimal('0'))
             })
 
-        velocity_rows = depleted_qs.values(
-            'product__name', 'added_at', 'depleted_at'
-        ).annotate(
-            sold=ExpressionWrapper(
-                F('quantity') - F('remaining_quantity'),
-                output_field=DecimalField(max_digits=20, decimal_places=2)
-            )
+
+        days_expr = Greatest(
+            ExpressionWrapper(
+                (Extract('depleted_at', 'epoch') - Extract('added_at', 'epoch')) / 86400.0,
+                output_field=FloatField()
+            ),
+            Value(1.0)
         )
 
-        product_velocity_map = {}
-        turnover_days = []
+        sold_expr = ExpressionWrapper(
+            F('quantity') - F('remaining_quantity'),
+            output_field=FloatField()
+        )
 
-        for row in velocity_rows:
-            delta = row['depleted_at'] - row['added_at']
-            days = max(delta.days, 1)
-            turnover_days.append(days)
-            vel = float(row['sold']) / days
-            name = row['product__name']
-            if name not in product_velocity_map:
-                product_velocity_map[name] = []
-            product_velocity_map[name].append(vel)
+        velocity_data = depleted_qs.values(
+            'product__name'
+        ).annotate(
+            avg_velocity=Avg(
+                ExpressionWrapper(
+                    sold_expr / days_expr,
+                    output_field=FloatField()
+                )
+            ),
+            avg_turnover=Avg(
+                ExpressionWrapper(
+                    (Extract('depleted_at', 'epoch') - Extract('added_at', 'epoch')) / 86400.0,
+                    output_field=FloatField()
+                )
+            )
+        ).order_by('-avg_velocity')
 
-        
-        avg_turnover = sum(turnover_days) / len(turnover_days) if turnover_days else 0
-        avg_velocities = {
-            name: sum(vels) / len(vels)
-            for name, vels in product_velocity_map.items()
-        }
+        sorted_velocity = list(velocity_data)
 
-        sorted_products = sorted(avg_velocities.items(), key=lambda x: x[1], reverse=True)
+        avg_turnover = (
+            sum(float(r['avg_turnover'] or 0) for r in sorted_velocity) /
+            len(sorted_velocity)
+        ) if sorted_velocity else 0
+
         fast_movers = [
-            {'product': name, 'velocity': round(vel, 2)}
-            for name, vel in sorted_products[:3]
+            {'product': r['product__name'], 'velocity': round(float(r['avg_velocity'] or 0), 2)}
+            for r in sorted_velocity[:3]
         ]
-
         slow_movers = [
-            {'product': name, 'velocity': round(vel, 2)}
-            for name, vel in sorted_products[-3:]
+            {'product': r['product__name'], 'velocity': round(float(r['avg_velocity'] or 0), 2)}
+            for r in sorted_velocity[-3:]
         ]
-
 
 
         # Active batches
