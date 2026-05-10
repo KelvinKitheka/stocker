@@ -442,22 +442,59 @@ class InsightViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def velocity(self, request):
         user = request.user
-        products = Product.objects.filter(user=user, is_active=True)
+        days_expr = ExpressionWrapper(
+            Greatest(
+                Extract(F('batches__depleted_at') - F('batches__added_at'), 'epoch') / 86400, 1
+            ),
+            output_field=FloatField()
+        )
+
+        sold_expr = ExpressionWrapper(
+            F('batches__quantity') - F('batches__remaining_quantity'),
+            output_field=FloatField()
+        )
+
+        products = Product.objects.filter(
+            user = user,
+            is_active = True
+        ).annotate(
+            current_stock_sum = Sum(
+                'batches__remaining_quantity',
+                filter = Q(batches__is_depleted = False)
+            ),
+
+            total_value_sum = Sum(
+                ExpressionWrapper(
+                    F('batches__remaining_quantity') * F('batches__buy_price_per_unit'),
+                    output_field = DecimalField(max_digits=20, decimal_places=2)
+                ),
+                filter = Q(batches__is_depleted = False)
+            ),
+
+            avg_vel = Avg(
+                ExpressionWrapper(
+                    sold_expr / days_expr,
+                    output_field = FloatField()
+                ),
+                filter = Q(batches__is_depleted = True)
+            )
+        )
+
         result = []
-        for product in products:
-            stock = product.current_stock()
-            avg_vel = product.average_velocity
-            days_left = round(float(stock) / avg_vel, 1) if avg_vel > 0 else None
+        for p in products:
+            stock = float(p.current_stock_sum or 0)
+            avg_velocity = float(p.avg_vel or 0)
             result.append({
-                'product_id': product.id,
-                'product': product.name,
-                'category': product.category,
+                'product_id': p.id,
+                'product': p.name,
+                'category': p.category,
                 'current_stock': stock,
-                'avg_velocity': round(avg_vel, 2),
-                'days_until_empty': days_left,
-                'total_value': product.total_value
+                'avg_velocity': round(avg_velocity, 2),
+                'days_until_empty': round(stock / avg_velocity, 1) if avg_velocity > 0 else None,
+                'total_value': float(p.total_value_sum or 0)
             })
-        result.sort(key= lambda x: x['avg_velocity'], reverse=True)
+
+        result.sort(key=lambda x: x['avg_velocity'], reverse = True)
         return Response(result)
 
 
