@@ -3,11 +3,11 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum, Q, Prefetch, F, Count, ExpressionWrapper, DecimalField
+from django.db.models import Sum, Q, Prefetch, F, Count, ExpressionWrapper, DecimalField, Avg, FloatField
 from django.utils import timezone
 from datetime import timedelta
 from .models import Product, StockBatch, PartialDepletion, LowStockAlert
-from django.db.models.functions import TruncDate, TruncMonth
+from django.db.models.functions import TruncDate, TruncMonth, Greatest, Extract
 from decimal import Decimal
 from .serializers import (
     ProductSerializer, StockBatchSerializer, PartialDepletionSerializer,
@@ -330,51 +330,68 @@ class InsightViewSet(viewsets.ViewSet):
         products = Product.objects.filter(user = user, is_active=True).prefetch_related('batches')
         depleted = StockBatch.objects.filter(product__user = user, is_depleted = True)
 
-        product_velocity = {}
-        product_turnover = {}
-        for b in depleted.select_related('product'):
-            delta = b.depleted_at - b.added_at
-            days = max(delta.days, 1)
-            sold = b.quantity - b.remaining_quantity
-            vel = sold / days
-            key = (b.product.id, b.product.name)
-            if key not in product_velocity:
-                product_velocity[key] = []
-                product_turnover[key] = []
-            product_velocity[key].append(vel)
-            product_turnover[key].append(days)
+        days_expr = ExpressionWrapper(
+            Greatest(
+                Extract(F('depleted_at') - F('added_at'), 'epoch') / 86400,
+                1
+            ),
+            output_field=FloatField()
+        )
 
-        velocity_summary = []
-        for (pid, name), vels in product_velocity.items():
-            avg_vel = sum(vels) / len(vels)
-            avg_turn = sum(product_turnover[(pid, name)]) / len(product_turnover[(pid, name)])
-            velocity_summary.append({
-                'product_id': pid,
-                'product_name': name,
-                'avg_velocity': round(avg_vel),
-                'avg_turnover': round(avg_turn, 2),
-                'batches_counted': len(vels)
-            })
-        velocity_summary.sort(key=lambda x: x['avg_velocity'], reverse=True)
+        sold_expr = ExpressionWrapper(
+            F('quantity') - F('remaining_quantity'),
+            output_field=DecimalField(max_digits=20, decimal_places=2)
+        )
 
+        velocity_data = depleted.values(
+            'product__id', 'product__name'
+        ).annotate(
+            avg_velocity = Avg(
+                ExpressionWrapper(
+                    sold_expr / days_expr,
+                    output_field=FloatField()
+                )
+            ),
+            avg_turnover = Avg(days_expr),
+            batches_counted = Count('id')
+        ).order_by('-avg_velocity')
+
+        velocity_summary = [{
+            'product_id': r['product__id'],
+            'product_name': r['product__name'],
+            'avg_velocity': round(float(r['avg_velocity'] or 0), 2),
+            'avg_turnover': round(float(r['avg_turnover'] or 0), 2),
+            'batches_counted': r['batches_counted']
+        } for r in velocity_data]
         fast_movers = velocity_summary[:5]
         slow_movers = reversed(velocity_summary[-5:])
 
-        alerts = []
-        for product in products:
-            try:
-                if product.alert.is_active and product.alert.is_triggered:
-                    stock = product.current_stock()
-                    threshold = product.alert.threshold_quantity
-                    alerts.append({
-                        'product_id': product.id,
-                        'product': product.name,
-                        'current_stock': stock,
-                        'threshold': threshold,
-                        'pct_remaining': round((float(stock) / float(threshold)) * 100, 2) if threshold > 0 else 0,
-                    })
-            except LowStockAlert.DoesNotExist:
-                pass
+        alerted = Product.objects.filter(
+            user=user,
+            is_active = True,
+            alert__is_active = True
+        ).annotate(
+            current_stock_sum = Sum(
+                'batches__remaining_quantity',
+                filter = Q(batches__is_depleted = False)
+            )
+        ).filter(
+            current_stock_sum__lte = F('alert__threshold_quantity')
+        ).values(
+            'id', 'name',
+            'alert__threshold_quantity',
+            'current_stock_sum'
+        )
+
+        alerts = [{
+            'product_id': p['id'],
+            'product': p['name'],
+            'current_stock': float(p['current_stock_sum'] or 0),
+            'threshold': float(p['alert__threshold_quantity']),
+            'pct_remaining': round(
+                (float(p['current_stock_sum'] or 0) / float(p['alert__threshold_quantity']))
+            ) if p['alert__threshold_quantity'] else 0
+        } for p in alerted]
 
         month_ago = timezone.now() - timedelta(days=30)
         active_b = StockBatch.objects.filter(
