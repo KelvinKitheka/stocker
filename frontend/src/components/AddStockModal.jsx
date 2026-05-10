@@ -7,6 +7,7 @@ const AddStockModal = ({ onClose, onSuccess}) => {
 
     const [ products, setProducts ] = useState([]);
     const [ showNewProduct, setShowNewProduct ] = useState(false);
+    const [ submitting, setSubmitting ] = useState(false)
     const [ formData, setFormData ] = useState({
         product: '',
         productName: '',
@@ -31,6 +32,9 @@ const AddStockModal = ({ onClose, onSuccess}) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if(submitting) return;
+        setSubmitting(true);
+        
         try {
             let productId = formData.product
             if (showNewProduct || !productId){
@@ -52,6 +56,8 @@ const AddStockModal = ({ onClose, onSuccess}) => {
         } catch(error) {
             console.error('Error adding stock:', error);
             alert('Failed to add stock. Ensure product does not exist.')
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -70,7 +76,7 @@ const AddStockModal = ({ onClose, onSuccess}) => {
             <div className="flex items-center gap-2">
                 <h2 className="text-xl font-semibold">Add new stock</h2>
             </div>
-            <button onClick={onClose}>
+            <button onClick={onClose}> 
                 <X className="w-6 h-6 ml-2"/>
             </button>
         </div>
@@ -204,9 +210,10 @@ const AddStockModal = ({ onClose, onSuccess}) => {
             </div>
             <button
             type="submit"
+            disabled={submitting}
             className="w-full bg-emerald-700 text-white p-3 rounded-lg font-semibold hover:bg-emerald-800 transition"
             >
-                Save Stock
+                {submitting ? 'Saving...' : 'Save Stock'}
             </button>
         </form>
       </div>

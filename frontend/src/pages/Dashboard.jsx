@@ -174,7 +174,7 @@ const Dashboard = ({currentUser}) => {
                                             {dashData?.fast_movers?.[0]?.product || 'N/A'}
                                         </div>
                                         <div className="text-sm font-gray-600">
-                                            {dashData?.fast_movers?.[0]?.velocity.toFixed(1) || 0} units/days 
+                                            {dashData?.fast_movers?.[0]?.velocity.toFixed(1) || 0} units/day
                                         </div>
                                     </div>
                                 </div>
@@ -185,7 +185,7 @@ const Dashboard = ({currentUser}) => {
                                             {dashData?.slow_movers?.at(-1)?.product || 'N/A'}
                                         </div>
                                         <div className="text-sm text-red-600">
-                                            {dashData?.slow_movers?.at(-1)?.velocity?.toFixed(1) || 0} units/days
+                                            {dashData?.slow_movers?.at(-1)?.velocity?.toFixed(1) || 0} units/day
                                         </div>
                                     </div>
                                 </div>
