@@ -7,6 +7,7 @@ from decimal import Decimal
 class Product(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
+    brand = models.Charfield(max_length=50)
     CATEGORY_CHOICES = [
     ('food', 'Food'),
     ('drink', 'Drink'),
