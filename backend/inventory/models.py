@@ -7,7 +7,7 @@ from decimal import Decimal
 class Product(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
-    brand = models.Charfield(max_length=50)
+    brand = models.CharField(max_length=50, blank=True)
     CATEGORY_CHOICES = [
     ('food', 'Food'),
     ('drink', 'Drink'),
@@ -33,6 +33,9 @@ class Product(models.Model):
             total=models.Sum('remaining_quantity')
         )['total']
         return total or Decimal('0')
+    @property
+    def display_name(self):
+        return f"{self.name} - {self.brand}" if self.brand else self.name
 
     @property
     def total_value(self):
