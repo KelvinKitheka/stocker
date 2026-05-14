@@ -12,17 +12,24 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ['id', 'name', 'category', 'default_sell_price', 'current_stock', 
+        fields = ['id', 'name', 'category',  'brand', 'display_name', 'default_sell_price', 'current_stock', 
         'total_value', 'is_active', 'created_at', 'has_alert', 'average_velocity']
-        read_only_fields = ['created_at']
+        read_only_fields = ['created_at', 'display_name']
 
-    def validate_name(self, value):
+    def validate(self, data):
         user = self.context['request'].user
-        if Product.objects.filter(user=user, name__iexact = value, is_active=True).exists():
-            raise serializers.ValidationError(
-                f"You already have a product called '{value}'. Select it from dropdown instead"
-            )
-        return value
+        name = data.get('name', '')
+        brand = data.get('brand', '')
+        instance = self.instance
+        qs = Product.objects.filter(user=user, name__iexact=name, brand__iexact=brand, is_active=True)
+        if instance:
+            qs = qs.exclude(pk=instance.pk)
+        if qs.exists():
+            label = f"'{name} - {brand}'" if brand else f"'{name}'"
+            raise serializers.ValidationError({
+                'name': f"You already have a product called {label}"
+            })
+        return data
 
     def get_current_stock(self, obj):
         if hasattr(obj, 'stock_sum'):
@@ -63,7 +70,7 @@ class StockBatchSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StockBatch
-        fields = ['id', 'product', 'product_category', 'product_name','quantity', 'remaining_quantity',
+        fields = ['id', 'product', 'product_category', 'product_name', 'prodect_brand', 'product_display_name','quantity', 'remaining_quantity',
                 'buy_price_per_unit', 'sell_price_per_unit', 'added_at', 'depleted_at',
                 'is_depleted', 'notes', 'estimated_profit', 'profit_margin', 
                 'days_in_stock', 'velocity', 'total_buy_cost']
