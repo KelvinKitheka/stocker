@@ -240,7 +240,75 @@ class ReportViewSet(viewsets.ViewSet):
                 'units_sold': r['units_sold']
             })
         return Response(result)
-    
+
+    @action(detail=False, methods=['get'])
+    def by_name(self, request):
+        user = request.user
+        rows = StockBatch.objects.filter(
+            product__user = user,
+            is_depleted = True
+        ).values(
+            'product__name', 'product__id', 'product__brand'
+        ).annotate(
+            revenue = Sum(self.revenue_expr()),
+            cost = Sum(self.cost_expr()),
+            profit = Sum(self.profit_expr()),
+            batches_sold = Count('id'),
+            units_sold = Sum(
+                ExpressionWrapper(
+                    F('quantity') - F('remaining_quantity'),
+                    output_field=DecimalField(max_digits=20, decimal_places=2)
+                )
+            )
+        ).order_by('product__name', '-profit')
+
+        groups = {}
+
+        for row in rows:
+            name = row['product__name']
+            cost = row['cost'] or Decimal('0')
+            profit = row['profit'] or Decimal('0')
+            
+            variant = {
+                'product_id': row['product__id'],
+                'brand': row['product__brand'] or 'no brand',
+                'revenue': row['revenue'],
+                'cost': cost,
+                'profit': profit,
+                'units': row['units_sold']
+            }
+
+            if name not in groups:
+                groups[name] = {
+                    'name': name,
+                    'revenue': Decimal('0'),
+                    'cost': Decimal('0'),
+                    'profit': Decimal('0'),
+                    'batches_sold': 0,
+                    'units_sold': Decimal('0'),
+                    'variants': [],
+                }
+
+            g = groups[name]
+            g['revenue'] += row['revenue'] or Decimal('0')
+            g['cost'] += cost
+            g['profit'] += profit
+            g['batches_sold'] += row['batches_sold']
+            g['units_sold'] += row['units_sold'] or Decimal('0')
+            g['variants'].append(variant)
+
+        
+        result = []
+        for g in sorted(groups.values(), key=lambda x: x['profit'], reverse=True):
+            g['variants'].sort(key=lambda x: x['profit'], reverse=True)
+            g['margin'] = round((g['profit'] / g['cost']) * 100, 1) if g['cost'] > 0 else 0
+            result.append(g)
+        
+        return Response(result)
+
+
+            
+
     
     @action(detail=False, methods=['get'])
     def history(self, request):
