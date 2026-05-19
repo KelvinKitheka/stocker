@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {X, Plus} from "lucide-react";
+import {X, Plus, ChevronDown} from "lucide-react";
 import api from "../services/api";
 
 
@@ -11,15 +11,22 @@ const AddStockModal = ({ onClose, onSuccess}) => {
     const [ formData, setFormData ] = useState({
         product: '',
         productName: '',
+        brand: '',
         quantity: '',
         buyPrice: '',
         sellPrice: '',
         category: ''
     });
 
+    const grouped = products.reduce((acc, p) => {
+        if (!acc[p.name]) acc[p.name] = [];
+        acc[p.name].push(p)
+        return acc;
+    }, {});
+
     useEffect(() =>{
         fetchProducts();
-    }, [])
+    }, []);
 
     const fetchProducts = async () => {
         try{
@@ -40,6 +47,7 @@ const AddStockModal = ({ onClose, onSuccess}) => {
             if (showNewProduct || !productId){
                 const productResponse = await api.post('/products/', {
                     name: formData.productName,
+                    brand: formData.brand,
                     category: formData.category,
                     default_sell_price: formData.sellPrice
                 });
@@ -70,8 +78,8 @@ const AddStockModal = ({ onClose, onSuccess}) => {
 
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-md mx-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex overflow-y-auto p-4 justify-center z-50">
+      <div className="bg-white rounded-lg max-h-[90vh] overflow-y-auto my-auto w-full max-w-md mx-4">
         <div className="bg-emerald-700 text-white p-4 rounded-t-lg flex items-center justify-between">
             <div className="flex items-center gap-2">
                 <h2 className="text-xl font-semibold">Add new stock</h2>
@@ -88,20 +96,34 @@ const AddStockModal = ({ onClose, onSuccess}) => {
                 </label>
                 {!showNewProduct ? (
                     <div className="space-y-2">
+                       <div className="relative">
                         <select
-                            name="product"
-                            value={formData.product}
-                            onChange={handlechange}
-                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                            required={!showNewProduct}
+                        name="product"
+                        value={formData.product}
+                        onChange={handlechange}
+                        className="w-full appearance-none border border-gray-300 rounded-lg p-3 pr-8 focus:ring-2 focus:ring-emerald-500
+                        focus-border-transparent"
+                        required={!showNewProduct}
                         >
                             <option value="">Select existing product</option>
-                            { products.map((product) => (
-                                <option key={product.id} value={product.id}>
-                                    {product.name}
+                            {Object.entries(grouped).map(([name, variants]) => 
+                            variants.length === 1 ? (
+                                <option key={variants[0].id} value={variants[0].id}>
+                                    {variants[0].name}
                                 </option>
-                            ))}
+                            ) : (
+                                <optgroup key={name} label={name}>
+                                    {variants.map((p) => (
+                                        <option key={p.id} value={p.id}>
+                                            {p.brand ? p.brand : p.name}
+                                        </option>
+                                    ))}
+                                </optgroup>
+                            )
+                            )}
                         </select>
+                        <ChevronDown className="absolute right-2 top-3.5 w-4 h-4 text-gray-400 pointer-events-none"/>
+                       </div>
                         <button
                             type="button"
                             onClick={() => {setShowNewProduct(true)}}
@@ -113,15 +135,34 @@ const AddStockModal = ({ onClose, onSuccess}) => {
                     </div>
                 ) : (
                     <div className="space-y-2">
-                        <input
-                        type="text"
-                        name="productName"
-                        value={formData.productName}
-                        onChange={handlechange}
-                        placeholder="Enter product name"
-                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                        required
-                        />
+                        <div>
+                            <label className="block text-xs text-gray-500 mb-1">
+                                Product name<span className="text-red-400">*</span>
+                            </label>
+                            <input
+                            type="text"
+                            name="productName"
+                            value={formData.productName}
+                            onChange={handlechange}
+                            placeholder="Enter product name"
+                            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                            required
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs text-gray-500 mb-1">
+                                Brand/Variant
+                            </label>
+                            <input
+                            type="text"
+                            name="brand"
+                            value={formData.brand}
+                            onChange={handlechange}
+                            placeholder="Enter brand"
+                            className="w-full border border-gray-300 rounded-lg p-3 mb-2focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                            />
+                        </div>
 
                         <select
                         name="category"
